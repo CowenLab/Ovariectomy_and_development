@@ -1,0 +1,13 @@
+type = mwm
+
+time.units = s
+# trial.length = 120
+
+# For circular pool/goal, give values in this order:
+# shape centre.x centre.y radius
+
+arena.bounds = circle 340 243.5 205
+
+goal = circle 267.5 305.5 20
+
+old.goal = circle 425 180 20
