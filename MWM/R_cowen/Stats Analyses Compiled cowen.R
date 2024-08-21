@@ -2,6 +2,7 @@
 #install.packages("rempsyc")
 #install.packages("heplots")
 #install.packages("lsr")
+library(tidyverse)
 library(rempsyc)
 library(heplots)
 library(lsr)
@@ -16,28 +17,38 @@ library(lsr)
 #Full 2-14 month old analysis
 filename = 'C:/Users/cowen/Documents/GitHub/Ovariectomy_and_development/MWM/MWM Master Sheet.csv'
 TABLExF_Full <- read.csv(filename)
-TABLExF_Full$Strain = factor(TABLExF_Full$Strain)
+TABLExF_Full$Strain   = factor(TABLExF_Full$Strain)
 TABLExF_Full$strategy_cat = factor(TABLExF_Full$name)
-TABLExF_Full$day_cat = factor(TABLExF_Full$X_Day)
+TABLExF_Full$day_cat  = factor(TABLExF_Full$X_Day)
+TABLExF_Full$age_mo   = TABLExF_Full$Age.months.
+TABLExF_Full$animalID = factor(TABLExF_Full$X_TargetID)
 
 TABLExF_Full$is_thigmotaxis = (TABLExF_Full$strategy == 1)*1
 TABLExF_Full$is_circling    = (TABLExF_Full$strategy == 2)*1
-TABLExF_Full$is_random_path    = (TABLExF_Full$strategy == 3)*1
+TABLExF_Full$is_random_path = (TABLExF_Full$strategy == 3)*1
 TABLExF_Full$is_scanning    = (TABLExF_Full$strategy == 4)*1
 TABLExF_Full$is_chaining    = (TABLExF_Full$strategy == 5)*1
-TABLExF_Full$is_directed_search    = (TABLExF_Full$strategy == 6)*1
-TABLExF_Full$is_corrected_path    = (TABLExF_Full$strategy == 7)*1
-TABLExF_Full$is_unknown1    = (TABLExF_Full$strategy == 8)*1
-TABLExF_Full$is_unknown2    = (TABLExF_Full$strategy == 9)*1
+TABLExF_Full$is_directed_search = (TABLExF_Full$strategy == 6)*1
+TABLExF_Full$is_corrected_path  = (TABLExF_Full$strategy == 7)*1
+TABLExF_Full$is_direct_path     = (TABLExF_Full$strategy == 8)*1 
+TABLExF_Full$is_perseverance    = (TABLExF_Full$strategy == 9)*1
+
+hist( TABLExF_Full$strategy )
+
+#TABLExF_Full[TABLExF_Full$strategy == 8,"strategy_cat"]
 
 mean(TABLExF_Full$is_thigmotaxis,na.rm = T)
-TB <- TABLExF_Full %>% group_by(day_cat, Strain) %>% summarize(mn_thig = mean(is_thigmotaxis + is_circling + is_random_path))
+TB <- TABLExF_Full %>% group_by(day_cat, Strain, animalID, Age.months.) %>% summarize(mn_thig = mean(is_thigmotaxis), mn_circ = mean(is_circling) , mn_rnd = mean(is_random_path) , mn_scan = mean(is_scanning) , mn_chain = mean(is_chaining) , mn_direct = mean(is_directed_search) , mn_cor_path = mean(is_corrected_path ), mn_dir_path = mean(is_direct_path), mn_persev = mean(is_perseverance) )
 plot(TB$mn_thig)
+plot(TB$mn_dir_path )
+plot(TB$mn_dir_path + TB$mn_cor_path )
+TB$perf = TB$mn_dir_path + TB$mn_cor_path
+ggplot(data = TB, aes(x = day_cat, perf, color = Strain)) + geom_violin() + geom_jitter() + facet_wrap(~Age.months.)
+
 
 boxplot(CIPL_Scores ~ Strain * name, data = TABLExF_Full)
 boxplot(is_thigmotaxis ~ Strain * name, data = TABLExF_Full)
 
-ggplot(data = TABLExF_Full, aes(x = factor(Age.months),  is_thigmotaxis, color = Strain)) + geom_boxplot() + facet_wrap(~name)
 
 
 AnovaCIPLaov2_xF_Full <- aov(CIPL_Scores ~ Strain * X_Day, data = TABLExF_Full)
