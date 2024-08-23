@@ -13,11 +13,6 @@ library(lsr)
 # The percent of the trajectory preference in each trial was calculated and repeated measures ANOVA was performed for statistical evaluation of the data
 
 #Plots for all 6 days together using the main table
-#DAY1TABLEx <- read.csv("C:/Users/Moreau/Desktop/WaterMazeAnalysis/R Files/Results/Tests/2MCombined_StrategiesResultswCIPLFiltered1x.csv")
-
-#ggplot(data = TESTTABLE, aes(x = factor(X_Day),  CIPL_Scores, color = Strain)) + geom_boxplot()
-
-#ggplot(data = TESTTABLE, aes(x = factor(X_Day),  strategy, color = Strain)) + geom_boxplot()
 
 #Full 2-14 month old analysis
 filename = 'C:/Users/cowen/Documents/GitHub/Ovariectomy_and_development/MWM/MWM Master Sheet.csv'
@@ -87,20 +82,12 @@ ggplot(data = TB, aes(x =escape, y = mn_CIPL, color = Strain)) + geom_point()+ f
 ggplot(data = TB, aes(x = factor(Age.months.), y = mn_CIPL, color = Strain)) + geom_violin() + geom_point(position=position_jitterdodge(dodge.width=0.9))  + facet_wrap(~day_cat)
 ggplot(data = TB, aes(x = factor(Age.months.), y = perf, color = Strain)) + geom_violin() + geom_point(position=position_jitterdodge(dodge.width=0.9))  + facet_wrap(~day_cat)
 # Same question but use a regression/scatter plot. Should be a correlation.
-ggplot(data = TB, aes(x =Age.months., y = mn_CIPL, color = Strain)) + geom_point()+ facet_wrap(~day_cat) +  geom_smooth()
-
+ggplot(data = TB, aes(x = Age.months., y = mn_CIPL, color = Strain)) + geom_point() + facet_wrap(~day_cat) +  geom_smooth()
 
 # ###################
-
-ggplot(data = TB, aes(x = day_cat, global, color = Strain)) + geom_boxplot() + geom_point(position=position_jitterdodge(dodge.width=0.9))  + facet_wrap(~Age.months.)
-ggplot(data = TB, aes(x = Age.months., global, color = Strain)) + geom_boxplot() + geom_jitter() + facet_wrap(~day_cat)
-
-ggplot(data = TB, aes(x = Age.months., global, color = Strain)) + geom_jitter() + facet_wrap(~day_cat)
-
-
-boxplot(CIPL_Scores ~ Strain * name, data = MWM)
-boxplot(is_thigmotaxis ~ Strain * name, data = MWM)
-
-
-AnovaCIPLaov2_xF_Full <- aov(CIPL_Scores ~ Strain * X_Day, data = MWM)
-EtaCIPL_xF_Full <- etaSquared(AnovaCIPLaov2_xF_Full)
+# Statistics
+# install.packages("rstatix")
+# ###################
+library(rstatix)
+a <- TB %>% group_by(day_cat, animalID, Age.months.) %>% kruskal_test(perf ~ Strain)
+a
