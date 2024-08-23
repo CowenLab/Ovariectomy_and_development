@@ -6,6 +6,11 @@ library(tidyverse)
 library(rempsyc)
 library(heplots)
 library(lsr)
+# Strategy groupings...
+
+# Konsolaki 2016: Here, we performed the same analysis using a programmable software (BIOBSERVE), and subsequently combined these strategies into three groups: escape strategies
+# (thigmotaxis and random search); local strategies (scanning, chaining) and global strategies (focal search, directed swimming).
+# The percent of the trajectory preference in each trial was calculated and repeated measures ANOVA was performed for statistical evaluation of the data
 
 #Plots for all 6 days together using the main table
 #DAY1TABLEx <- read.csv("C:/Users/Moreau/Desktop/WaterMazeAnalysis/R Files/Results/Tests/2MCombined_StrategiesResultswCIPLFiltered1x.csv")
@@ -23,6 +28,9 @@ TABLExF_Full$day_cat  = factor(TABLExF_Full$X_Day)
 TABLExF_Full$age_mo   = TABLExF_Full$Age.months.
 TABLExF_Full$animalID = factor(TABLExF_Full$X_TargetID)
 
+#
+
+
 TABLExF_Full$is_thigmotaxis = (TABLExF_Full$strategy == 1)*1
 TABLExF_Full$is_circling    = (TABLExF_Full$strategy == 2)*1
 TABLExF_Full$is_random_path = (TABLExF_Full$strategy == 3)*1
@@ -33,22 +41,31 @@ TABLExF_Full$is_corrected_path  = (TABLExF_Full$strategy == 7)*1
 TABLExF_Full$is_direct_path     = (TABLExF_Full$strategy == 8)*1 
 TABLExF_Full$is_perseverance    = (TABLExF_Full$strategy == 9)*1
 
+TB$perf = TB$mn_dir_path + TB$mn_cor_path
+
 hist( TABLExF_Full$strategy )
 
 #TABLExF_Full[TABLExF_Full$strategy == 8,"strategy_cat"]
 
 mean(TABLExF_Full$is_thigmotaxis,na.rm = T)
+mean(TABLExF_Full$is_directed_search,na.rm = T)
+
 TB <- TABLExF_Full %>% group_by(day_cat, Strain, animalID, Age.months.) %>% summarize(mn_thig = mean(is_thigmotaxis), mn_circ = mean(is_circling) , mn_rnd = mean(is_random_path) , mn_scan = mean(is_scanning) , mn_chain = mean(is_chaining) , mn_direct = mean(is_directed_search) , mn_cor_path = mean(is_corrected_path ), mn_dir_path = mean(is_direct_path), mn_persev = mean(is_perseverance) )
+
+TB$escape = TB$mn_thig + TB$mn_rnd
+TB$global = TB$mn_scan + TB$mn_chain
+TB$local = TB$mn_dir_path + TB$mn_cor_path
+
 plot(TB$mn_thig)
 plot(TB$mn_dir_path )
 plot(TB$mn_dir_path + TB$mn_cor_path )
-TB$perf = TB$mn_dir_path + TB$mn_cor_path
-ggplot(data = TB, aes(x = day_cat, perf, color = Strain)) + geom_violin() + geom_jitter() + facet_wrap(~Age.months.)
+ggplot(data = TB, aes(x = day_cat, perf, color = Strain)) + geom_violin() + geom_point(position=position_jitterdodge(dodge.width=0.9))  + facet_wrap(~Age.months.)
+ggplot(data = TB, aes(x = day_cat, perf, color = Strain)) + geom_boxplot() + geom_point(position=position_jitterdodge(dodge.width=0.9))  + facet_wrap(~Age.months.)
+ggplot(data = TB, aes(x = Age.months., perf, color = Strain)) + geom_boxplot() + geom_point(position=position_jitterdodge(dodge.width=0.009))  + facet_wrap(~day_cat)
 
 
 boxplot(CIPL_Scores ~ Strain * name, data = TABLExF_Full)
 boxplot(is_thigmotaxis ~ Strain * name, data = TABLExF_Full)
-
 
 
 AnovaCIPLaov2_xF_Full <- aov(CIPL_Scores ~ Strain * X_Day, data = TABLExF_Full)
@@ -102,8 +119,6 @@ MeansStrat_xA_2m <- aggregate(TABLExA_2m$strategy, by = list(TABLExA_2m$Strain),
 print(MeansStrat_xA_2m)
 MeansStrat_xR_2m <- aggregate(TABLExR_2m$strategy, by = list(TABLExR_2m$Strain), FUN = mean)
 print(MeansStrat_xR_2m)
-
-
 
 
 #NEW - 6 month old cohort
