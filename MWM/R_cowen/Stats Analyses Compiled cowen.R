@@ -38,8 +38,8 @@ TABLExF_Full$trial_num[TABLExF_Full$trial_num > 31 & TABLExF_Full$trial_num <= 3
 
 # Eliminate the probe trials from analysis as we are not using them as we don't have enough data for now.
 # 
- MWM <- subset(TABLExF_Full, trial_num < 7)
-#MWM <- subset(TABLExF_Full, trial_num > 3 & trial_num < 7)
+MWM <- subset(TABLExF_Full, trial_num < 7)
+#MWM <- subset(TABLExF_Full, trial_num > 3 & trial_num < 7) # Limit to just trials 5 and 6 when they know things.
 
 MWM$is_thigmotaxis = (MWM$strategy == 1)*1
 MWM$is_circling    = (MWM$strategy == 2)*1
