@@ -28,29 +28,42 @@ TABLExF_Full$day_cat  = factor(TABLExF_Full$X_Day)
 TABLExF_Full$age_mo   = TABLExF_Full$Age.months.
 TABLExF_Full$animalID = factor(TABLExF_Full$X_TargetID)
 
-#
+# Create a within-day trial column.
+TABLExF_Full$trial_num = TABLExF_Full$X_Trial
+TABLExF_Full$trial_num[TABLExF_Full$trial_num > 6 & TABLExF_Full$trial_num <= 12 ]   = TABLExF_Full$trial_num[TABLExF_Full$trial_num > 6 & TABLExF_Full$trial_num <= 12 ]-6
+TABLExF_Full$trial_num[TABLExF_Full$trial_num > 12 & TABLExF_Full$trial_num <= 18 ]   = TABLExF_Full$trial_num[TABLExF_Full$trial_num > 12 & TABLExF_Full$trial_num <= 18 ]-12
+TABLExF_Full$trial_num[TABLExF_Full$trial_num > 18 & TABLExF_Full$trial_num <= 25 ]   = TABLExF_Full$trial_num[TABLExF_Full$trial_num > 18 & TABLExF_Full$trial_num <= 25 ]-18
+TABLExF_Full$trial_num[TABLExF_Full$trial_num > 25 & TABLExF_Full$trial_num <= 31 ]   = TABLExF_Full$trial_num[TABLExF_Full$trial_num > 25 & TABLExF_Full$trial_num <= 31 ]-25
+TABLExF_Full$trial_num[TABLExF_Full$trial_num > 31 & TABLExF_Full$trial_num <= 38 ]   = TABLExF_Full$trial_num[TABLExF_Full$trial_num > 31 & TABLExF_Full$trial_num <= 38 ]-31
+
+# Eliminate the probe trials from analysis as we are not using them as we don't have enough data for now.
+# 
+MWM <- subset(TABLExF_Full, trial_num < 7)
 
 
-TABLExF_Full$is_thigmotaxis = (TABLExF_Full$strategy == 1)*1
-TABLExF_Full$is_circling    = (TABLExF_Full$strategy == 2)*1
-TABLExF_Full$is_random_path = (TABLExF_Full$strategy == 3)*1
-TABLExF_Full$is_scanning    = (TABLExF_Full$strategy == 4)*1
-TABLExF_Full$is_chaining    = (TABLExF_Full$strategy == 5)*1
-TABLExF_Full$is_directed_search = (TABLExF_Full$strategy == 6)*1
-TABLExF_Full$is_corrected_path  = (TABLExF_Full$strategy == 7)*1
-TABLExF_Full$is_direct_path     = (TABLExF_Full$strategy == 8)*1 
-TABLExF_Full$is_perseverance    = (TABLExF_Full$strategy == 9)*1
+MWM$is_thigmotaxis = (MWM$strategy == 1)*1
+MWM$is_circling    = (MWM$strategy == 2)*1
+MWM$is_random_path = (MWM$strategy == 3)*1
+MWM$is_scanning    = (MWM$strategy == 4)*1
+MWM$is_chaining    = (MWM$strategy == 5)*1
+MWM$is_directed_search = (MWM$strategy == 6)*1
+MWM$is_corrected_path  = (MWM$strategy == 7)*1
+MWM$is_direct_path     = (MWM$strategy == 8)*1 
+MWM$is_perseverance    = (MWM$strategy == 9)*1
 
 TB$perf = TB$mn_dir_path + TB$mn_cor_path
 
-hist( TABLExF_Full$strategy )
+ggplot(data = MWM, aes(x = trial_num, CIPL_Scores, color = Strain)) + geom_point() + facet_wrap(~day_cat)
 
-#TABLExF_Full[TABLExF_Full$strategy == 8,"strategy_cat"]
 
-mean(TABLExF_Full$is_thigmotaxis,na.rm = T)
-mean(TABLExF_Full$is_directed_search,na.rm = T)
+hist( MWM$strategy )
 
-TB <- TABLExF_Full %>% group_by(day_cat, Strain, animalID, Age.months.) %>% summarize(mn_thig = mean(is_thigmotaxis), mn_circ = mean(is_circling) , mn_rnd = mean(is_random_path) , mn_scan = mean(is_scanning) , mn_chain = mean(is_chaining) , mn_direct = mean(is_directed_search) , mn_cor_path = mean(is_corrected_path ), mn_dir_path = mean(is_direct_path), mn_persev = mean(is_perseverance) )
+#MWM[MWM$strategy == 8,"strategy_cat"]
+
+mean(MWM$is_thigmotaxis,na.rm = T)
+mean(MWM$is_directed_search,na.rm = T)
+
+TB <- MWM %>% group_by(day_cat, Strain, animalID, Age.months.) %>% summarize(mn_thig = mean(is_thigmotaxis), mn_circ = mean(is_circling) , mn_rnd = mean(is_random_path) , mn_scan = mean(is_scanning) , mn_chain = mean(is_chaining) , mn_direct = mean(is_directed_search) , mn_cor_path = mean(is_corrected_path ), mn_dir_path = mean(is_direct_path), mn_persev = mean(is_perseverance) )
 
 TB$escape = TB$mn_thig + TB$mn_rnd
 TB$global = TB$mn_scan + TB$mn_chain
@@ -63,26 +76,29 @@ ggplot(data = TB, aes(x = day_cat, perf, color = Strain)) + geom_violin() + geom
 ggplot(data = TB, aes(x = day_cat, perf, color = Strain)) + geom_boxplot() + geom_point(position=position_jitterdodge(dodge.width=0.9))  + facet_wrap(~Age.months.)
 ggplot(data = TB, aes(x = Age.months., perf, color = Strain)) + geom_boxplot() + geom_point(position=position_jitterdodge(dodge.width=0.009))  + facet_wrap(~day_cat)
 
-
-boxplot(CIPL_Scores ~ Strain * name, data = TABLExF_Full)
-boxplot(is_thigmotaxis ~ Strain * name, data = TABLExF_Full)
+ggplot(data = TB, aes(x = trial_num, perf, color = Strain)) + geom_point() + facet_wrap(~day_cat)
 
 
-AnovaCIPLaov2_xF_Full <- aov(CIPL_Scores ~ Strain * X_Day, data = TABLExF_Full)
+
+boxplot(CIPL_Scores ~ Strain * name, data = MWM)
+boxplot(is_thigmotaxis ~ Strain * name, data = MWM)
+
+
+AnovaCIPLaov2_xF_Full <- aov(CIPL_Scores ~ Strain * X_Day, data = MWM)
 EtaCIPL_xF_Full <- etaSquared(AnovaCIPLaov2_xF_Full)
 
-AnovaCIPLaov2_xF_Full <- aov(CIPL_Scores ~ Strain * X_Day * Age.months, data = TABLExF_Full)
+AnovaCIPLaov2_xF_Full <- aov(CIPL_Scores ~ Strain * X_Day * Age.months, data = MWM)
 
 
-TABLExF_Full$Age.months <- as.factor(TABLExF_Full$Age.months)
-AnovaCIPLaov2_xF_Full_Age <- aov(CIPL_Scores ~ Strain * Age.months, data = TABLExF_Full)
+MWM$Age.months <- as.factor(MWM$Age.months)
+AnovaCIPLaov2_xF_Full_Age <- aov(CIPL_Scores ~ Strain * Age.months, data = MWM)
 tukey <- TukeyHSD(AnovaCIPLaov2_xF_Full_Age, "Age.months")
 print(tukey)
 
-boxplot(CIPL_Scores ~ Strain * strategy, data = TABLExF_Full)
+boxplot(CIPL_Scores ~ Strain * strategy, data = MWM)
 
 
-TABLExF_Full <- TABLExF_Full %>%
+MWM <- MWM %>%
   rename(Age.months = Age.months.)
 
 #NEW - 2 month old cohort
