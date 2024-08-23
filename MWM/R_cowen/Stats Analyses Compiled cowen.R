@@ -89,5 +89,8 @@ ggplot(data = TB, aes(x = Age.months., y = mn_CIPL, color = Strain)) + geom_poin
 # install.packages("rstatix")
 # ###################
 library(rstatix)
-a <- TB %>% group_by(day_cat, animalID, Age.months.) %>% kruskal_test(perf ~ Strain)
-a
+a <- TB[,c('allocentric', 'day_cat', 'Strain', 'animalID','Age.months.' )] %>% group_by(day_cat,Age.months.) %>% kruskal_test(allocentric ~ Strain)
+#b <- TB[,c('allocentric', 'day_cat', 'Strain', 'animalID','Age.months.' )] %>% group_by(day_cat,Age.months.) %>% wilcox.test(allocentric ~ Strain)
+
+TB$Strain
+
