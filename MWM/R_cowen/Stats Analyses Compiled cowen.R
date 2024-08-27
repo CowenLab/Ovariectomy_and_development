@@ -48,6 +48,13 @@ MWM$is_perseverance    = (MWM$strategy == 9)*1
 
 MWM$day_cat2 = MWM$day_cat
 
+#MWM$day_cat2[MWM$X_Day == 1] = factor('Early')
+#MWM$day_cat2[MWM$X_Day == 2] = 'Early'
+#MWM$day_cat2[MWM$X_Day == 3] = 'Late'
+#MWM$day_cat2[MWM$X_Day == 4] = 'Late'
+#MWM$day_cat2[MWM$X_Day == 5] = 'Reversal'
+#MWM$day_cat2[MWM$X_Day == 6] = 'Reversal'
+
 ggplot(data = MWM, aes(x = trial_num, CIPL_Scores, color = Strain)) + geom_point() + facet_wrap(~day_cat)
 
 hist( MWM$strategy )
@@ -56,7 +63,10 @@ mean(MWM$is_thigmotaxis,na.rm = T)
 mean(MWM$is_directed_search,na.rm = T)
 
 TB <- MWM %>% group_by(day_cat, Strain, animalID, Age.months.) %>% summarize(mn_thig = mean(is_thigmotaxis), mn_circ = mean(is_circling) , mn_rnd = mean(is_random_path) , mn_scan = mean(is_scanning) , mn_chain = mean(is_chaining) , mn_direct = mean(is_directed_search) , mn_corrected = mean(is_corrected_path ), mn_dir_path = mean(is_direct_path), mn_persev = mean(is_perseverance), mn_CIPL = mean(CIPL_Scores) )
+
 TB$perf = TB$mn_dir_path + TB$mn_corrected
+
+
 
 # Strategies from the Konsolaki 2016 paper.
 TB$escape = TB$mn_thig + TB$mn_rnd
