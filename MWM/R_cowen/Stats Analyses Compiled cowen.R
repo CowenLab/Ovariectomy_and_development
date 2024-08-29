@@ -46,27 +46,20 @@ MWM$is_corrected_path  = (MWM$strategy == 7)*1
 MWM$is_direct_path     = (MWM$strategy == 8)*1 
 MWM$is_perseverance    = (MWM$strategy == 9)*1
 
-MWM$day_cat2 = MWM$day_cat
-
-#MWM$day_cat2[MWM$X_Day == 1] = factor('Early')
-#MWM$day_cat2[MWM$X_Day == 2] = 'Early'
-#MWM$day_cat2[MWM$X_Day == 3] = 'Late'
-#MWM$day_cat2[MWM$X_Day == 4] = 'Late'
-#MWM$day_cat2[MWM$X_Day == 5] = 'Reversal'
-#MWM$day_cat2[MWM$X_Day == 6] = 'Reversal'
+MWM$day_cat2 <- as.factor(ifelse(MWM$X_Day <= 2, 'Early', ifelse(MWM$X_Day > 2 & MWM$X_Day <= 4,'Late', 'Reversal')))
+table(MWM$day_cat2)
 
 ggplot(data = MWM, aes(x = trial_num, CIPL_Scores, color = Strain)) + geom_point() + facet_wrap(~day_cat)
+ggplot(data = MWM, aes(x = trial_num, CIPL_Scores, color = Strain)) + geom_point() + facet_wrap(~day_cat2)
 
 hist( MWM$strategy )
 
 mean(MWM$is_thigmotaxis,na.rm = T)
 mean(MWM$is_directed_search,na.rm = T)
 
-TB <- MWM %>% group_by(day_cat, Strain, animalID, Age.months.) %>% summarize(mn_thig = mean(is_thigmotaxis), mn_circ = mean(is_circling) , mn_rnd = mean(is_random_path) , mn_scan = mean(is_scanning) , mn_chain = mean(is_chaining) , mn_direct = mean(is_directed_search) , mn_corrected = mean(is_corrected_path ), mn_dir_path = mean(is_direct_path), mn_persev = mean(is_perseverance), mn_CIPL = mean(CIPL_Scores) )
+TB <- MWM %>% group_by(day_cat2, Strain, animalID, Age.months.) %>% summarize(mn_thig = mean(is_thigmotaxis), mn_circ = mean(is_circling) , mn_rnd = mean(is_random_path) , mn_scan = mean(is_scanning) , mn_chain = mean(is_chaining) , mn_direct = mean(is_directed_search) , mn_corrected = mean(is_corrected_path ), mn_dir_path = mean(is_direct_path), mn_persev = mean(is_perseverance), mn_CIPL = mean(CIPL_Scores) )
 
 TB$perf = TB$mn_dir_path + TB$mn_corrected
-
-
 
 # Strategies from the Konsolaki 2016 paper.
 TB$escape = TB$mn_thig + TB$mn_rnd
@@ -78,12 +71,12 @@ TB$perf = TB$global-TB$escape
 TB$allocentric = TB$mn_dir_path + TB$mn_corrected + TB$mn_direct
 
 # Look at the effect of DAY on performance treating each Strain (OVX vs. Sham)
-ggplot(data = TB, aes(x = day_cat, y = escape, color = Strain)) + geom_violin() + geom_point(position=position_jitterdodge(dodge.width=0.9))  + facet_wrap(~Age.months.)
-ggplot(data = TB, aes(x = day_cat, y = local, color = Strain)) + geom_violin() + geom_point(position=position_jitterdodge(dodge.width=0.9))  + facet_wrap(~Age.months.)
-ggplot(data = TB, aes(x = day_cat, y = global, color = Strain)) + geom_violin() + geom_point(position=position_jitterdodge(dodge.width=0.9))  + facet_wrap(~Age.months.)
-ggplot(data = TB, aes(x = day_cat, y = perf, color = Strain)) + geom_violin() + geom_point(position=position_jitterdodge(dodge.width=0.9))  + facet_wrap(~Age.months.)
-ggplot(data = TB, aes(x = day_cat, y = allocentric, color = Strain)) + geom_violin() + geom_point(position=position_jitterdodge(dodge.width=0.9))  + facet_wrap(~Age.months.)
-ggplot(data = TB, aes(x = day_cat, y = mn_CIPL, color = Strain)) + geom_violin() + geom_point(position=position_jitterdodge(dodge.width=0.9))  + facet_wrap(~Age.months.)
+ggplot(data = TB, aes(x = day_cat2, y = escape, color = Strain)) + geom_violin() + geom_point(position=position_jitterdodge(dodge.width=0.9))  + facet_wrap(~Age.months.)
+ggplot(data = TB, aes(x = day_cat2, y = local, color = Strain)) + geom_violin() + geom_point(position=position_jitterdodge(dodge.width=0.9))  + facet_wrap(~Age.months.)
+ggplot(data = TB, aes(x = day_cat2, y = global, color = Strain)) + geom_violin() + geom_point(position=position_jitterdodge(dodge.width=0.9))  + facet_wrap(~Age.months.)
+ggplot(data = TB, aes(x = day_cat2, y = perf, color = Strain)) + geom_violin() + geom_point(position=position_jitterdodge(dodge.width=0.9))  + facet_wrap(~Age.months.)
+ggplot(data = TB, aes(x = day_cat2, y = allocentric, color = Strain)) + geom_violin() + geom_point(position=position_jitterdodge(dodge.width=0.9))  + facet_wrap(~Age.months.)
+ggplot(data = TB, aes(x = day_cat2, y = mn_CIPL, color = Strain)) + geom_violin() + geom_point(position=position_jitterdodge(dodge.width=0.9))  + facet_wrap(~Age.months.)
 
 # What correlates the best with CIPL?
 ggplot(data = TB, aes(x =perf, y = mn_CIPL, color = Strain)) + geom_point()+ facet_wrap(~Age.months.) +  geom_smooth()
@@ -91,11 +84,11 @@ ggplot(data = TB, aes(x =allocentric, y = mn_CIPL, color = Strain)) + geom_point
 ggplot(data = TB, aes(x =escape, y = mn_CIPL, color = Strain)) + geom_point()+ facet_wrap(~Age.months.) +  geom_smooth()
 
 # Is there a general effect of age?
-ggplot(data = TB, aes(x = factor(Age.months.), y = mn_CIPL, color = Strain)) + geom_violin() + geom_point(position=position_jitterdodge(dodge.width=0.9))  + facet_wrap(~day_cat)
-ggplot(data = TB, aes(x = factor(Age.months.), y = perf, color = Strain)) + geom_violin() + geom_point(position=position_jitterdodge(dodge.width=0.9))  + facet_wrap(~day_cat)
+ggplot(data = TB, aes(x = factor(Age.months.), y = mn_CIPL, color = Strain)) + geom_violin() + geom_point(position=position_jitterdodge(dodge.width=0.9))  + facet_wrap(~day_cat2)
+ggplot(data = TB, aes(x = factor(Age.months.), y = perf, color = Strain)) + geom_violin() + geom_point(position=position_jitterdodge(dodge.width=0.9))  + facet_wrap(~day_cat2)
 
 # Same question but use a regression/scatter plot. Should be a correlation.
-ggplot(data = TB, aes(x = Age.months., y = mn_CIPL, color = Strain)) + geom_point() + facet_wrap(~day_cat) +  geom_smooth()
+ggplot(data = TB, aes(x = Age.months., y = mn_CIPL, color = Strain)) + geom_point() + facet_wrap(~day_cat2) +  geom_smooth()
 
 # ###################
 # Statistics
@@ -105,8 +98,11 @@ ggplot(data = TB, aes(x = Age.months., y = mn_CIPL, color = Strain)) + geom_poin
 #pairwise.wilcox.test()
 
 library(rstatix)
-a <- TB[,c('allocentric', 'day_cat', 'Strain', 'animalID','Age.months.' )] %>% group_by(day_cat,Age.months.) %>% kruskal_test(allocentric ~ Strain)
-#b <- TB[,c('allocentric', 'day_cat', 'Strain', 'animalID','Age.months.' )] %>% group_by(day_cat,Age.months.) %>% wilcox.test(allocentric ~ Strain)
+a_esc <- TB[,c('escape', 'day_cat2', 'Strain', 'animalID','Age.months.' )] %>% group_by(day_cat2,Age.months.) %>% kruskal_test(escape ~ Strain)
 
-TB$Strain
+a <- TB[,c('allocentric', 'day_cat2', 'Strain', 'animalID','Age.months.' )] %>% group_by(day_cat2,Age.months.) %>% kruskal_test(allocentric ~ Strain)
+
+b <- TB[,c('mn_CIPL', 'day_cat2', 'Strain', 'animalID','Age.months.' )] %>% group_by(day_cat2,Age.months.) %>% kruskal_test(mn_CIPL ~ Strain)
+
+bTB$Strain
 
