@@ -12,6 +12,15 @@ library(lsr)
 library(dplyr)  
 library(tidyverse)
 
+#Full 2-14 month old analysis
+filename = 'C:/Users/cowen/Documents/GitHub/Ovariectomy_and_development/MWM/MWM Master Sheet.csv'
+TABLExF_Full <- read.csv(filename)
+TABLExF_Full$Strain   = factor(TABLExF_Full$Strain)
+TABLExF_Full$strategy_cat = factor(TABLExF_Full$name)
+TABLExF_Full$day_cat  = factor(TABLExF_Full$X_Day)
+TABLExF_Full$age_mo   = TABLExF_Full$Age.months.
+TABLExF_Full$animalID = factor(TABLExF_Full$X_TargetID)
+
 #First Table Setup
 TABLExF_Full$trial_num = TABLExF_Full$X_Trial
 TABLExF_Full$trial_num[TABLExF_Full$trial_num > 6 & TABLExF_Full$trial_num <= 12 ]   = TABLExF_Full$trial_num[TABLExF_Full$trial_num > 6 & TABLExF_Full$trial_num <= 12 ]-6
