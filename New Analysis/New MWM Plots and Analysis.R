@@ -14,7 +14,7 @@ library(tidyverse)
 
 #Full 2-14 month old analysis
 filename = 'C:/Users/Moreau/Documents/GitHub/Ovariectomy_and_development/MWM/MWM Master Sheet.csv'
-TABLExF_Full2 <- read.csv(filename)
+TABLExF_Full <- read.csv(filename)
 TABLExF_Full$Strain   = factor(TABLExF_Full$Strain)
 TABLExF_Full$strategy_cat = factor(TABLExF_Full$name)
 TABLExF_Full$day_cat  = factor(TABLExF_Full$X_Day)
