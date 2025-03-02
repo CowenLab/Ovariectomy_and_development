@@ -45,7 +45,7 @@ MWM$trial_num[MWM$trial_num > 31 & MWM$trial_num <= 38 ] = MWM$trial_num[MWM$tri
 MWM$Strain   = factor(MWM$Strain,levels = c('SHAM', 'OVX'))
 MWM$strategy_cat = factor(MWM$name)
 MWM$day_cat  = factor(MWM$X_Day)
-MWM$age_mo   = MWM$Age.months.
+MWM$age_mo_cat  = factor(MWM$Age.months.)
 MWM$animalID = factor(MWM$X_TargetID) # age_animal_month
 MWM$Trial = factor(MWM$X_Trial) # This is the original trial that ignores day boundaries to be continuous until end of experiment.
 
@@ -104,7 +104,7 @@ MWM_DAY <- TMP %>% group_by(animalID, Age.months., day_cat, Strain) %>%
             mn_TIE =  mean(time.in.e.quadrant.norm), mn_TIW = mean(time.in.w.quadrant.norm),mn_TIN = mean(time.in.n.quadrant.norm),
             mn_TIS = mean(time.in.s.quadrant.norm), mn_TNmS = mean(time.in.s.minus.n.norm))
 
-# CIPL
+# CIPL: All days.
 ggplot(MWM_DAY, aes( x = day_cat, y= mn_CIPL, fill =  Strain, colour = Strain)) + geom_boxplot(position = position_dodge(width = 0.9)) + 
   geom_point(position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.9), size = 1.8, alpha = .7 ) + 
   facet_wrap(~Age.months.) + scale_fill_manual(values = custom_colors) + scale_color_manual(values = c(marker_color, marker_color)) + 
@@ -127,6 +127,37 @@ ggplot(MWM_DAY, aes( x = day_cat, y= mn_TIS, fill =  Strain, colour = Strain)) +
   geom_point(position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.9), size = 1.8, alpha = .7 ) + 
   facet_wrap(~Age.months.) + scale_fill_manual(values = custom_colors) + scale_color_manual(values = c(marker_color, marker_color)) + 
   ggtitle(titstr)
+
+# FIGURE 1: One graph of ONLY age for the wild type SHAM
+MWM_SHAM <- subset(MWM_DAY, Strain == 'SHAM') 
+ggplot(MWM_SHAM, aes( x = day_cat, y= mn_CIPL, fill =  Strain, colour = Strain)) + geom_boxplot(position = position_dodge(width = 0.9)) + 
+  geom_point(position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.9), size = 1.8, alpha = .7 ) + 
+  facet_wrap(~Age.months.) + scale_fill_manual(values = custom_colors) + scale_color_manual(values = c(marker_color, marker_color)) + 
+  ggtitle(paste(titstr, ' Sham only'))
+# Now restrict to just Day 4
+MWM_SHAM_Day4 <- subset(MWM_DAY, Strain == 'SHAM' & day_cat == 4) 
+ggplot(MWM_SHAM_Day4, aes( x = factor(Age.months.), y= mn_CIPL, fill =  Strain, colour = Strain)) + geom_boxplot(position = position_dodge(width = 0.9)) + 
+  geom_point(position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.9), size = 1.8, alpha = .7 ) + 
+  scale_fill_manual(values = custom_colors) + scale_color_manual(values = c(marker_color, marker_color)) + 
+  ggtitle(paste(titstr, 'Day 4 Sham only'))
+
+# SHAM ONLY: Now restrict to just Day 5 Reversal
+MWM_SHAM_Day5 <- subset(MWM_DAY, Strain == 'SHAM' & day_cat == 5)
+ggplot(MWM_SHAM_Day5, aes( x = factor(Age.months.), y= mn_CIPL, fill =  Strain, colour = Strain)) + geom_boxplot(position = position_dodge(width = 0.9)) + 
+  geom_point(position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.9), size = 1.8, alpha = .7 ) + 
+  scale_fill_manual(values = custom_colors) + scale_color_manual(values = c(marker_color, marker_color)) + 
+  ggtitle(paste(titstr, 'Day 5 (Reversal) Sham only'))
+# Focus Day 4 and then again on day 5
+MWM_DAY4 <- subset(MWM_DAY,day_cat == 4) 
+ggplot(MWM_DAY4, aes( x = factor(Age.months.), y= mn_CIPL, fill =  Strain, colour = Strain)) + geom_boxplot(position = position_dodge(width = 0.9)) + 
+  geom_point(position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.9), size = 1.8, alpha = .7 ) + 
+  scale_fill_manual(values = custom_colors) + scale_color_manual(values = c(marker_color, marker_color)) + 
+  ggtitle(paste(titstr, 'Day 4'))
+MWM_DAY5 <- subset(MWM_DAY,day_cat == 5) 
+ggplot(MWM_DAY5, aes( x = factor(Age.months.), y= mn_CIPL, fill =  Strain, colour = Strain)) + geom_boxplot(position = position_dodge(width = 0.9)) + 
+  geom_point(position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.9), size = 1.8, alpha = .7 ) + 
+  scale_fill_manual(values = custom_colors) + scale_color_manual(values = c(marker_color, marker_color)) + 
+  ggtitle(paste(titstr, 'Day 5'))
 
 # Focus and do a t-test on day 4 and then again on day 5
 #MWM_DAY4_month <- subset(MWM_DAY, Age.months. ==2 & day_cat == 4) 
@@ -164,11 +195,33 @@ ggplot(MWM_DAY5_month, aes( x = day_cat, y= mn_TNmS, fill =  Strain, colour = St
   ggtitle(titstr2)
 
 
-# Pull out just trial 7 as this is the reversal during the first half of training.
+# Pull out just trial 7 as this is the PROBE during the first half of training.
 # NOTE: the mean day table does not include this trial.
 # STOPPED HERE_ where to pick up coding.
-#MWM_DAY4_month <- subset(MWM_DAY, Age.months. == 9 & trial_num == 7) 
+MWM_DAY4_probe = subset(MWM, Probe == TRUE & day_cat == 4 & trial_num == 7)
+ggplot(MWM_DAY4_probe, aes( x = age_mo_cat, y= CIPL_Scores, fill =  Strain, colour = Strain)) + geom_boxplot(position = position_dodge(width = 0.9)) + 
+  geom_point(position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.9), size = 3.8, alpha = .7 ) + 
+  scale_fill_manual(values = custom_colors) + scale_color_manual(values = c(marker_color, marker_color)) + 
+  ggtitle('PROBE DAY 4')
 
+ggplot(MWM_DAY4_probe, aes( x = age_mo_cat, y= time.in.s.quadrant.norm , fill =  Strain, colour = Strain)) + geom_boxplot(position = position_dodge(width = 0.9)) + 
+  geom_point(position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.9), size = 3.8, alpha = .7 ) + 
+  scale_fill_manual(values = custom_colors) + scale_color_manual(values = c(marker_color, marker_color)) + 
+  ggtitle('PROBE DAY 4')
+
+
+# DAY 6 PROBE
+
+MWM_DAY6_probe = subset(MWM, Probe == TRUE & day_cat == 6 & trial_num == 7)
+ggplot(MWM_DAY6_probe, aes( x = age_mo_cat, y= CIPL_Scores, fill =  Strain, colour = Strain)) + geom_boxplot(position = position_dodge(width = 0.9)) + 
+  geom_point(position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.9), size = 3.8, alpha = .7 ) + 
+  scale_fill_manual(values = custom_colors) + scale_color_manual(values = c(marker_color, marker_color)) + 
+  ggtitle('PROBE DAY 6')
+
+ggplot(MWM_DAY6_probe, aes( x = age_mo_cat, y= time.in.n.quadrant.norm , fill =  Strain, colour = Strain)) + geom_boxplot(position = position_dodge(width = 0.9)) + 
+  geom_point(position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.9), size = 3.8, alpha = .7 ) + 
+  scale_fill_manual(values = custom_colors) + scale_color_manual(values = c(marker_color, marker_color)) + 
+  ggtitle('PROBE DAY 6')
 
 # WS anova is probably overkill as we really only care about day 4 and day 5 and these are separate hypotheses 
 # so I think they can be treated independently.
