@@ -116,7 +116,6 @@ ggplot(MWM_DAY, aes( x = day_cat, y= mn_TNmS, fill =  Strain, colour = Strain)) 
   facet_wrap(~Age.months.) + scale_fill_manual(values = custom_colors) + scale_color_manual(values = c(marker_color, marker_color)) + 
   ggtitle(titstr)
 
-
 # Allocentric - only really shows up for all trials since in 2 trials, you can only get values of 0, .5, and 1 at the most.
 ggplot(MWM_DAY, aes( x = day_cat, y= mn_allocentric, fill =  Strain, colour = Strain)) + geom_boxplot(position = position_dodge(width = 0.9)) + 
   geom_point(position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.9), size = 1.8, alpha = .7 ) + 
@@ -183,6 +182,12 @@ ggplot(MWM_DAY_month, aes( x = day_cat, y= mn_CIPL, fill =  Strain, colour = Str
   scale_fill_manual(values = custom_colors) + scale_color_manual(values = c(marker_color, marker_color)) + 
   ggtitle(titstr2)
 
+# PROBE TRIALS: There are some probe trials - trial 7 on day 4 (X_Trial 25) and trial 7 on Day 6 (X_Trial = 38)   
+# Stats 9M - Probe comparing AProbe vs RProbe
+
+
+
+# All below may not be necessary - check 
 # Within subject ANOVA. see https://www.r-bloggers.com/2025/02/two-way-repeated-measures-anova-in-r/
 model.aov <- aov(mn_CIPL ~ Strain * day_cat + Error(animalID/(Strain * day_cat)),data = MWM_DAY_month)
 summary(model.aov)
