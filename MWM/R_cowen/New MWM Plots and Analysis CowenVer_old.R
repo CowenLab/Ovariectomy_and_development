@@ -17,7 +17,7 @@ library(tidyverse)
 # ("24" = Trial before probe, "25" Probe trial, "37" Trial before probe after reversal, "38" last probe after removing platform))
 #custom_colors <- c("OVX" = "purple", "SHAM" = "orange") 
 custom_colors <- c(OVX = "#9f044d", SHAM = "#000000") 
-
+marker_color <- "b5bbbd"
 
 TABLExF_Full <- read.csv('C:/Users/cowen/Documents/GitHub/Ovariectomy_and_development/MWM/MWM Master Sheet.csv')
 
@@ -57,8 +57,11 @@ TB9$is_corrected_path  = (TB9$strategy == 7)*1
 TB9$is_direct_path     = (TB9$strategy == 8)*1
 TB9$is_perseverance    = (TB9$strategy == 9)*1
 
+TB9$strategy_cat = factor(TB9$strategy)
+TB9$strategy_cat <- recode(TB9$strategy_cat, "1" = "thig", "2" = "circ", "3" = "rand", "4" = "scan", "5" = "chain", "6" = "dir_search", "7" = "corpth", "8" = "dirpath", "9" = "persev")
+
 #Main Table Setup. Goal is the group by day.
-# This really does nothing right now other than alter variable names. for simplicaity we should just stick with TB9.
+# This really does nothing right now other than alter variable names. for simplicity we should just stick with TB9.
 GraphTable01 <- TB9 %>% group_by(Strain, animalID, Age.months., day_cat, Trial, Time_In_ASouthGoal_Quadrant, Time_In_RNorthGoal_Quadrant, Time_In_West_Quadrant, Time_In_East_Quadrant) %>% summarize(mn_thig = mean(is_thigmotaxis), mn_circ = mean(is_circling) , mn_rnd = mean(is_random_path) , mn_scan = mean(is_scanning) , mn_chain = mean(is_chaining) , mn_direct = mean(is_directed_search) , mn_cor_path = mean(is_corrected_path ), mn_dir_path = mean(is_direct_path), mn_persev = mean(is_perseverance), mn_CIPL = mean(CIPL_Scores))
 GraphTable01b <- TB9 %>% group_by(Strain, animalID, Age.months., day_cat, Trial, Time_In_ASouthGoal_Quadrant, Time_In_RNorthGoal_Quadrant, Time_In_West_Quadrant, Time_In_East_Quadrant) 
 
