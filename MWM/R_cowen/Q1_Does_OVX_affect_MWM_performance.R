@@ -55,10 +55,10 @@ MWM$Trial = factor(MWM$X_Trial) # This is the original trial that ignores day bo
 #MWM$time.in.e.quadrant
 # Determine the proportion of time in a quadrant.
 S = MWM$time.in.e.quadrant + MWM$time.in.w.quadrant+ MWM$time.in.n.quadrant+ MWM$time.in.s.quadrant
-MWM$time.in.e.quadrant.norm = MWM$time.in.e.quadrant/S
-MWM$time.in.w.quadrant.norm = MWM$time.in.w.quadrant/S
-MWM$time.in.n.quadrant.norm = MWM$time.in.n.quadrant/S
-MWM$time.in.s.quadrant.norm = MWM$time.in.s.quadrant/S
+MWM$time.in.e.quadrant.norm = 100*MWM$time.in.e.quadrant/S
+MWM$time.in.w.quadrant.norm = 100*MWM$time.in.w.quadrant/S
+MWM$time.in.n.quadrant.norm = 100*MWM$time.in.n.quadrant/S
+MWM$time.in.s.quadrant.norm = 100*MWM$time.in.s.quadrant/S
 
 MWM$time.in.s.minus.n.norm = MWM$time.in.s.quadrant.norm - MWM$time.in.n.quadrant.norm
 
@@ -78,8 +78,20 @@ MWM$is_corrected_path  = (MWM$strategy == 7)*1
 MWM$is_direct_path     = (MWM$strategy == 8)*1
 MWM$is_perseverance    = (MWM$strategy == 9)*1
 
-MWM$is_allocentric  = MWM$is_direct_path + MWM$is_directed_search + MWM$is_corrected_path
+MWM$is_allocentric  = MWM$is_direct_path + MWM$is_directed_search + MWM$is_corrected_path 
 MWM$is_escape       = MWM$is_thigmotaxis + MWM$is_circling + MWM$is_random_path
+
+ggplot(MWM, aes( x = day_cat, y= CIPL_Scores , fill =  Strain, colour = Strain)) + geom_boxplot(position = position_dodge(width = 0.9)) + 
+  geom_point(position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.9), size = 1.8, alpha = .7 ) + 
+  facet_wrap(~Age.months.) + scale_fill_manual(values = custom_colors) + scale_color_manual(values = c(marker_color, marker_color)) + 
+  ggtitle('All Trails (trial treated as the subj.)')
+
+ggplot(subset(MWM,trial_num ==1), aes( x = day_cat, y= CIPL_Scores , fill =  Strain, colour = Strain)) + geom_boxplot(position = position_dodge(width = 0.9)) + 
+  geom_point(position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.9), size = 1.8, alpha = .7 ) + 
+  facet_wrap(~Age.months.) + scale_fill_manual(values = custom_colors) + scale_color_manual(values = c(marker_color, marker_color)) + 
+  ggtitle('Trial 1 only (trial treated as the subj.)')
+
+
 
 #Main Table Setup. Goal is to group by day.
 # This really does nothing right now other than alter variable names. for simplicity we should just stick with MWM.
@@ -88,10 +100,12 @@ MWM$is_escape       = MWM$is_thigmotaxis + MWM$is_circling + MWM$is_random_path
 #NOTE: GraphTable01b <- MWM %>% group_by(Strain, animalID, Age.months., day_cat, Trial, Time_In_ASouthGoal_Quadrant, Time_In_RNorthGoal_Quadrant, Time_In_West_Quadrant, Time_In_East_Quadrant) 
 titstr = 'alltrials'
 TMP <- subset(MWM,trial_num < 7) # do this if you only want to compute performance based on the last trials. Ignore the few trial 7 as these are probe trials.
-titstr = 'trials56'
-TMP <- subset(MWM, trial_num > 4 & trial_num < 7) # do this if you only want to compute performance based on the last trials. Ignore the few trial 7 as these are probe trials.
-titstr = 'trials12'
-TMP <- subset(MWM, trial_num < 3)  # do this if you only want to compute performance based on the first 2 trials.
+#titstr = 'trials56'
+#TMP <- subset(MWM, trial_num > 4 & trial_num < 7) # do this if you only want to compute performance based on the last trials. Ignore the few trial 7 as these are probe trials.
+#titstr = 'trials12'
+#TMP <- subset(MWM, trial_num < 3)  # do this if you only want to compute performance based on the first 2 trials.
+#titstr = 'trial 1'
+#TMP <- subset(MWM, trial_num == 1)  # do this if you only want to compute performance based on the first 2 trials.
 #titstr = 'trial7' # This is for analyzing the probe trial only.
 #TMP <- subset(MWM, trial_num == 7)  # do this if you only want to compute performance based on the first 2 trials.
 
@@ -102,7 +116,7 @@ MWM_DAY <- TMP %>% group_by(animalID, Age.months., day_cat, Strain) %>%
             mn_cor_path = mean(is_corrected_path ), mn_dir_path = mean(is_direct_path), mn_persev = mean(is_perseverance), 
             mn_CIPL = mean(CIPL_Scores), mn_allocentric = mean(is_allocentric), mn_escape = mean(is_escape),
             mn_TIE =  mean(time.in.e.quadrant.norm), mn_TIW = mean(time.in.w.quadrant.norm),mn_TIN = mean(time.in.n.quadrant.norm),
-            mn_TIS = mean(time.in.s.quadrant.norm), mn_TNmS = mean(time.in.s.minus.n.norm))
+            mn_TIS = mean(time.in.s.quadrant.norm), mn_TSmN = mean(time.in.s.minus.n.norm))
 
 # CIPL: All days.
 ggplot(MWM_DAY, aes( x = day_cat, y= mn_CIPL, fill =  Strain, colour = Strain)) + geom_boxplot(position = position_dodge(width = 0.9)) + 
