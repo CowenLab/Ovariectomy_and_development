@@ -92,20 +92,19 @@ ggplot(subset(MWM,trial_num ==1), aes( x = day_cat, y= CIPL_Scores , fill =  Str
   ggtitle('Trial 1 only (trial treated as the subj.)')
 
 
-
 #Main Table Setup. Goal is to group by day.
 # This really does nothing right now other than alter variable names. for simplicity we should just stick with MWM.
 #MWM_DAY <- MWM %>% group_by(Strain, animalID, Age.months., day_cat, Trial, time.in.s.quadrant, time.in.n.quadrant, time.in.w.quadrant, time.in.e.quadrant) %>% summarize(mn_thig = mean(is_thigmotaxis), mn_circ = mean(is_circling) , mn_rnd = mean(is_random_path) , mn_scan = mean(is_scanning) , mn_chain = mean(is_chaining) , mn_direct = mean(is_directed_search) , mn_cor_path = mean(is_corrected_path ), mn_dir_path = mean(is_direct_path), mn_persev = mean(is_perseverance), mn_CIPL = mean(CIPL_Scores))
 # Do we want to just average across all trils in a day or just for the last few trials?
 #NOTE: GraphTable01b <- MWM %>% group_by(Strain, animalID, Age.months., day_cat, Trial, Time_In_ASouthGoal_Quadrant, Time_In_RNorthGoal_Quadrant, Time_In_West_Quadrant, Time_In_East_Quadrant) 
-titstr = 'alltrials'
-TMP <- subset(MWM,trial_num < 7) # do this if you only want to compute performance based on the last trials. Ignore the few trial 7 as these are probe trials.
+#titstr = 'alltrials'
+#TMP <- subset(MWM,trial_num < 7) # do this if you only want to compute performance based on the last trials. Ignore the few trial 7 as these are probe trials.
 #titstr = 'trials56'
 #TMP <- subset(MWM, trial_num > 4 & trial_num < 7) # do this if you only want to compute performance based on the last trials. Ignore the few trial 7 as these are probe trials.
 #titstr = 'trials12'
 #TMP <- subset(MWM, trial_num < 3)  # do this if you only want to compute performance based on the first 2 trials.
-#titstr = 'trial 1'
-#TMP <- subset(MWM, trial_num == 1)  # do this if you only want to compute performance based on the first 2 trials.
+titstr = 'trial 1'
+TMP <- subset(MWM, trial_num == 1)  # do this if you only want to compute performance based on the first 2 trials.
 #titstr = 'trial7' # This is for analyzing the probe trial only.
 #TMP <- subset(MWM, trial_num == 7)  # do this if you only want to compute performance based on the first 2 trials.
 
@@ -114,9 +113,19 @@ MWM_DAY <- TMP %>% group_by(animalID, Age.months., day_cat, Strain) %>%
   summarize(mn_thig = mean(is_thigmotaxis), mn_circ = mean(is_circling) , mn_rnd = mean(is_random_path) , 
             mn_scan = mean(is_scanning) , mn_chain = mean(is_chaining) , mn_direct = mean(is_directed_search) , 
             mn_cor_path = mean(is_corrected_path ), mn_dir_path = mean(is_direct_path), mn_persev = mean(is_perseverance), 
-            mn_CIPL = mean(CIPL_Scores), mn_allocentric = mean(is_allocentric), mn_escape = mean(is_escape),
+            mn_CIPL = mean(CIPL_Scores), mn_allocentric = mean(is_allocentric), sum_allocentric = sum(is_allocentric), mn_escape = mean(is_escape),
             mn_TIE =  mean(time.in.e.quadrant.norm), mn_TIW = mean(time.in.w.quadrant.norm),mn_TIN = mean(time.in.n.quadrant.norm),
             mn_TIS = mean(time.in.s.quadrant.norm), mn_TSmN = mean(time.in.s.minus.n.norm))
+
+MWM_DAY_COMBINE_MICE <- TMP %>% group_by( Age.months., day_cat, Strain) %>% 
+  summarize( sum_allocentric = sum(is_allocentric), sum_escape = sum(is_escape))
+
+
+MWM_DAY_COMBINE_MICE_PROBE4 <- subset(MWM, Probe == TRUE & day_cat == 4 & trial_num == 7) %>% group_by( Age.months., Strain) %>% 
+  summarize( sum_allocentric = sum(is_allocentric), sum_escape = sum(is_escape),mn_CIPL = mean(CIPL_Scores))
+
+MWM_DAY_COMBINE_MICE_PROBE6 <- subset(MWM, Probe == TRUE & day_cat == 6 & trial_num == 7) %>% group_by( Age.months., Strain) %>% 
+  summarize( sum_allocentric = sum(is_allocentric), sum_escape = sum(is_escape),mn_CIPL = mean(CIPL_Scores))
 
 # CIPL: All days.
 ggplot(MWM_DAY, aes( x = day_cat, y= mn_CIPL, fill =  Strain, colour = Strain)) + geom_boxplot(position = position_dodge(width = 0.9)) + 
@@ -124,8 +133,8 @@ ggplot(MWM_DAY, aes( x = day_cat, y= mn_CIPL, fill =  Strain, colour = Strain)) 
   facet_wrap(~Age.months.) + scale_fill_manual(values = custom_colors) + scale_color_manual(values = c(marker_color, marker_color)) + 
   ggtitle(titstr)
 
-# mn_TNmS
-ggplot(MWM_DAY, aes( x = day_cat, y= mn_TNmS, fill =  Strain, colour = Strain)) + geom_boxplot(position = position_dodge(width = 0.9)) + 
+# mn_TSmN
+ggplot(MWM_DAY, aes( x = day_cat, y= mn_TSmN, fill =  Strain, colour = Strain)) + geom_boxplot(position = position_dodge(width = 0.9)) + 
   geom_point(position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.9), size = 1.8, alpha = .7 ) + 
   facet_wrap(~Age.months.) + scale_fill_manual(values = custom_colors) + scale_color_manual(values = c(marker_color, marker_color)) + 
   ggtitle(titstr)
@@ -141,6 +150,31 @@ ggplot(MWM_DAY, aes( x = day_cat, y= mn_TIS, fill =  Strain, colour = Strain)) +
   geom_point(position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.9), size = 1.8, alpha = .7 ) + 
   facet_wrap(~Age.months.) + scale_fill_manual(values = custom_colors) + scale_color_manual(values = c(marker_color, marker_color)) + 
   ggtitle(titstr)
+
+
+# sum of allocentric and escape using MWM_DAY_COMBINE_MICE
+ggplot(MWM_DAY_COMBINE_MICE, aes( x = day_cat, y= sum_allocentric, fill =  Strain, colour = Strain)) + 
+  geom_col(position = position_dodge(width = 0.9), color = 'black') + scale_fill_manual(values = custom_colors) + facet_wrap(~Age.months.)  +
+  ggtitle(titstr)
+
+ggplot(MWM_DAY_COMBINE_MICE, aes( x = day_cat, y= sum_escape, fill =  Strain, colour = Strain)) + 
+  geom_col(position = position_dodge(width = 0.9), color = 'black') + scale_fill_manual(values = custom_colors) + facet_wrap(~Age.months.) +
+  ggtitle(titstr)
+
+ggplot(MWM_DAY_COMBINE_MICE, aes( x = day_cat, y= sum_allocentric/sum_escape, fill =  Strain, colour = Strain)) + 
+  geom_col(position = position_dodge(width = 0.9), color = 'black') + scale_fill_manual(values = custom_colors) + facet_wrap(~Age.months.) +
+  ggtitle(titstr)
+
+
+ggplot(MWM_DAY_COMBINE_MICE_PROBE4, aes( x = Strain, y= sum_escape, fill =  Strain, colour = Strain)) + 
+  geom_col(position = position_dodge(width = 0.9), color = 'black') + scale_fill_manual(values = custom_colors) + facet_wrap(~Age.months.)  +
+  ggtitle(titstr)
+
+ggplot(MWM_DAY_COMBINE_MICE_PROBE6, aes( x = Strain, y= sum_allocentric, fill =  Strain, colour = Strain)) + 
+  geom_col(position = position_dodge(width = 0.9), color = 'black') + scale_fill_manual(values = custom_colors) + facet_wrap(~Age.months.)  +
+  ggtitle(titstr)
+
+# sum allocentric but just for probe trials.
 
 # FIGURE 1: One graph of ONLY age for the wild type SHAM
 MWM_SHAM <- subset(MWM_DAY, Strain == 'SHAM') 
@@ -211,7 +245,6 @@ ggplot(MWM_DAY5_month, aes( x = day_cat, y= mn_TNmS, fill =  Strain, colour = St
 
 # Pull out just trial 7 as this is the PROBE during the first half of training.
 # NOTE: the mean day table does not include this trial.
-# STOPPED HERE_ where to pick up coding.
 MWM_DAY4_probe = subset(MWM, Probe == TRUE & day_cat == 4 & trial_num == 7)
 ggplot(MWM_DAY4_probe, aes( x = age_mo_cat, y= CIPL_Scores, fill =  Strain, colour = Strain)) + geom_boxplot(position = position_dodge(width = 0.9)) + 
   geom_point(position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.9), size = 3.8, alpha = .7 ) + 
