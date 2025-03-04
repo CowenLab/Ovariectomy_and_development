@@ -54,7 +54,7 @@ MWM$Trial = factor(MWM$X_Trial) # This is the original trial that ignores day bo
 #MWM$time.in.w.quadrant
 #MWM$time.in.e.quadrant
 # Determine the proportion of time in a quadrant.
-S = MWM$time.in.e.quadrant + MWM$time.in.w.quadrant+ MWM$time.in.n.quadrant+ MWM$time.in.s.quadrant
+S = MWM$time.in.e.quadrant + MWM$time.in.w.quadrant + MWM$time.in.n.quadrant + MWM$time.in.s.quadrant
 MWM$time.in.e.quadrant.norm = 100*MWM$time.in.e.quadrant/S
 MWM$time.in.w.quadrant.norm = 100*MWM$time.in.w.quadrant/S
 MWM$time.in.n.quadrant.norm = 100*MWM$time.in.n.quadrant/S
@@ -92,19 +92,23 @@ ggplot(subset(MWM,trial_num ==1), aes( x = day_cat, y= CIPL_Scores , fill =  Str
   ggtitle('Trial 1 only (trial treated as the subj.)')
 
 
+
+
 #Main Table Setup. Goal is to group by day.
 # This really does nothing right now other than alter variable names. for simplicity we should just stick with MWM.
 #MWM_DAY <- MWM %>% group_by(Strain, animalID, Age.months., day_cat, Trial, time.in.s.quadrant, time.in.n.quadrant, time.in.w.quadrant, time.in.e.quadrant) %>% summarize(mn_thig = mean(is_thigmotaxis), mn_circ = mean(is_circling) , mn_rnd = mean(is_random_path) , mn_scan = mean(is_scanning) , mn_chain = mean(is_chaining) , mn_direct = mean(is_directed_search) , mn_cor_path = mean(is_corrected_path ), mn_dir_path = mean(is_direct_path), mn_persev = mean(is_perseverance), mn_CIPL = mean(CIPL_Scores))
 # Do we want to just average across all trils in a day or just for the last few trials?
 #NOTE: GraphTable01b <- MWM %>% group_by(Strain, animalID, Age.months., day_cat, Trial, Time_In_ASouthGoal_Quadrant, Time_In_RNorthGoal_Quadrant, Time_In_West_Quadrant, Time_In_East_Quadrant) 
-#titstr = 'alltrials'
-#TMP <- subset(MWM,trial_num < 7) # do this if you only want to compute performance based on the last trials. Ignore the few trial 7 as these are probe trials.
+titstr = 'alltrials'
+TMP <- subset(MWM,trial_num < 7) # do this if you only want to compute performance based on the last trials. Ignore the few trial 7 as these are probe trials.
+titstr = 'days1to4 learning'
+TMP <- subset(MWM,trial_num < 5 & X_Day < 5) # do this if you only want to compute performance based on the last trials. Ignore the few trial 7 as these are probe trials.
 #titstr = 'trials56'
 #TMP <- subset(MWM, trial_num > 4 & trial_num < 7) # do this if you only want to compute performance based on the last trials. Ignore the few trial 7 as these are probe trials.
 #titstr = 'trials12'
 #TMP <- subset(MWM, trial_num < 3)  # do this if you only want to compute performance based on the first 2 trials.
-titstr = 'trial 1'
-TMP <- subset(MWM, trial_num == 1)  # do this if you only want to compute performance based on the first 2 trials.
+#titstr = 'trial 1'
+#TMP <- subset(MWM, trial_num == 1)  # do this if you only want to compute performance based on the first 2 trials.
 #titstr = 'trial7' # This is for analyzing the probe trial only.
 #TMP <- subset(MWM, trial_num == 7)  # do this if you only want to compute performance based on the first 2 trials.
 
@@ -132,6 +136,18 @@ ggplot(MWM_DAY, aes( x = day_cat, y= mn_CIPL, fill =  Strain, colour = Strain)) 
   geom_point(position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.9), size = 1.8, alpha = .7 ) + 
   facet_wrap(~Age.months.) + scale_fill_manual(values = custom_colors) + scale_color_manual(values = c(marker_color, marker_color)) + 
   ggtitle(titstr)
+
+# Correlation between CIPL and other scores.
+# What correlates the best with CIPL?
+ggplot(data = MWM_DAY, aes(x =mn_allocentric, y = mn_CIPL, color = Strain)) + geom_point()+ facet_wrap(~Age.months.) +  geom_smooth() + 
+  scale_color_manual(values = custom_colors) + ggtitle(paste (titstr,'Correlation between measures'))
+ggplot(data = MWM_DAY, aes(x =mn_escape, y = mn_CIPL, color = Strain)) + geom_point()+ facet_wrap(~Age.months.) +  geom_smooth() + 
+  scale_color_manual(values = custom_colors) + ggtitle(paste (titstr,'Correlation between measures'))
+ggplot(data = MWM_DAY, aes(x =mn_TIS, y = mn_CIPL, color = Strain)) + geom_point()+ facet_wrap(~Age.months.) +  geom_smooth() + 
+  scale_color_manual(values = custom_colors) + ggtitle(paste (titstr,'Correlation between measures'))
+
+#ggplot(data = TB, aes(x =escape, y = mn_CIPL, color = Strain)) + geom_point()+ facet_wrap(~Age.months.) +  geom_smooth()
+
 
 # mn_TSmN
 ggplot(MWM_DAY, aes( x = day_cat, y= mn_TSmN, fill =  Strain, colour = Strain)) + geom_boxplot(position = position_dodge(width = 0.9)) + 
@@ -246,6 +262,7 @@ ggplot(MWM_DAY5_month, aes( x = day_cat, y= mn_TNmS, fill =  Strain, colour = St
 # Pull out just trial 7 as this is the PROBE during the first half of training.
 # NOTE: the mean day table does not include this trial.
 MWM_DAY4_probe = subset(MWM, Probe == TRUE & day_cat == 4 & trial_num == 7)
+
 ggplot(MWM_DAY4_probe, aes( x = age_mo_cat, y= CIPL_Scores, fill =  Strain, colour = Strain)) + geom_boxplot(position = position_dodge(width = 0.9)) + 
   geom_point(position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.9), size = 3.8, alpha = .7 ) + 
   scale_fill_manual(values = custom_colors) + scale_color_manual(values = c(marker_color, marker_color)) + 
@@ -256,10 +273,15 @@ ggplot(MWM_DAY4_probe, aes( x = age_mo_cat, y= time.in.s.quadrant.norm , fill = 
   scale_fill_manual(values = custom_colors) + scale_color_manual(values = c(marker_color, marker_color)) + 
   ggtitle('PROBE DAY 4')
 
+ggplot(MWM_DAY4_probe, aes( x = age_mo_cat, y= latency.to.goal , fill =  Strain, colour = Strain)) + geom_boxplot(position = position_dodge(width = 0.9)) + 
+  geom_point(position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.9), size = 3.8, alpha = .7 ) + 
+  scale_fill_manual(values = custom_colors) + scale_color_manual(values = c(marker_color, marker_color)) + 
+  ggtitle('PROBE DAY 4')
 
 # DAY 6 PROBE
 
 MWM_DAY6_probe = subset(MWM, Probe == TRUE & day_cat == 6 & trial_num == 7)
+
 ggplot(MWM_DAY6_probe, aes( x = age_mo_cat, y= CIPL_Scores, fill =  Strain, colour = Strain)) + geom_boxplot(position = position_dodge(width = 0.9)) + 
   geom_point(position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.9), size = 3.8, alpha = .7 ) + 
   scale_fill_manual(values = custom_colors) + scale_color_manual(values = c(marker_color, marker_color)) + 
