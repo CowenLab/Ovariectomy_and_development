@@ -1,9 +1,7 @@
 ###########################################################
 # Does OVX impact water maze performance?
 #
-# TODO: Change INTACT to INTACT  
-# Verify that the swim times are capped at >0 and < 60 to get rid of bad trials. Probe trials should also be capped for analysis.
-# Why are the strategies strange on probe trials?
+# TODO: 
 # How are the probe trials assessed - should it not be the number of traversals over the target?
 # Generate statistics 
 # Konsolaki uses a Box-Cox transform (EM) to make data normal -seems overkill, but should look into. in MASS, called boxcox()
@@ -23,14 +21,61 @@ library(ggthemes)
 
 theme_set(theme_classic(base_size = 16))
 #theme_set(theme_minimal(base_size = 16))
+plot_MWM1 <- function(TBL,vbl,ylab_txt, titstr){
+  ggplot(TBL, aes( x = TBL$day_cat, y= vbl,  colour = TBL$Strain, shape =TBL$Strain)) + 
+    stat_summary(fun.data = mean_se, geom = "errorbar", width = .8, size = 1.8, position = position_dodge(width=0.9)) +
+    scale_color_manual(values = custom_colors) + 
+    scale_shape_manual(values = c(21,22)) + 
+    geom_point(position = position_jitterdodge(jitter.width = 0.3, dodge.width = 0.9), size = 2.2, alpha = 0.65, stroke = 1) + 
+    #geom_dotplot(position = position_dodge(width=0.9),
+    #             binaxis='y', 
+  #               stackdir='center', 
+  #               dotsize = 1.4) + 
+    facet_wrap(~TBL$Age.months.) + 
+    ylab(ylab_txt) +
+    theme(legend.position="none")+ 
+    ggtitle(titstr)
+}
+
+
+plot_MWM_box <- function(TBL,vbl,ylab_txt, titstr){
+  
+  #ggplot(MWM_DAY, aes( x = day_cat, y= mn_TSmN, fill =  Strain, colour = Strain)) + geom_boxplot(position = position_dodge(width = 0.9)) + 
+  #  geom_point(position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.9), size = 1.8, alpha = .7 ) + 
+  #  facet_wrap(~Age.months.) + scale_fill_manual(values = custom_colors) + scale_color_manual(values = c(marker_color, marker_color)) + 
+  #  ggtitle(titstr)
+    
+  ggplot(TBL, aes( x = TBL$day_cat, y= vbl,  colour = TBL$Strain, shape =TBL$Strain, fill =TBL$Strain)) + 
+    geom_boxplot(position = position_dodge(width = 0.9)) + 
+    geom_point(position = position_jitterdodge(jitter.width = 0.22, dodge.width = 0.9), size = 2.2, alpha = 0.65, stroke = 1) + 
+    stat_summary(fun.data = mean_se, geom = "errorbar", width = .4, size = 1.8, position = position_dodge(width=0.9)) +
+    scale_color_manual(values = c(marker_color, marker_color)) + 
+    scale_shape_manual(values = c(21,22)) + 
+    scale_fill_manual(values = custom_colors) +
+    facet_wrap(~TBL$Age.months.) + 
+    ylab(ylab_txt) +
+    theme(legend.position="none")+ 
+    ggtitle(titstr)
+
+}
+
+plot_MWM_violin <- function(TBL,vbl,ylab_txt, titstr){
+  ggplot(TBL, aes( x = TBL$day_cat, y= vbl,  colour = TBL$Strain, shape =TBL$Strain)) + 
+    stat_summary(fun.data = mean_se, geom = "errorbar", width = .8, size = 1.8, position = position_dodge(width=0.9)) +
+    scale_color_manual(values = custom_colors) +scale_shape_manual(values = c(21,22)) + geom_violin() + 
+    geom_point(position = position_jitterdodge(jitter.width = 0.3, dodge.width = 0.9), size = 2.2, alpha = 0.65, stroke = 1) + 
+    facet_wrap(~TBL$Age.months.) + ylab(ylab_txt) +
+    theme(legend.position="none")+ 
+    ggtitle(titstr)
+}
 
 # NOTE
 # 9 mo are the only ones that had both probes.
 # ("24" = Trial before probe, "25" Probe trial, "37" Trial before probe after reversal, "38" last probe after removing platform))
 custom_colors <- c(INTACT = "#000000",OVX = "#9f044d") 
 custom_colors2 <- c("#000000","#9f044d") 
-#marker_color <- "#b5b2b3"
-marker_color <- "white"
+marker_color <- "#b5b2b3"
+#marker_color <- "white"
 
 # LOAD AND PROCESS DATA
 MWM <- read.csv('C:/Users/cowen/Documents/GitHub/Ovariectomy_and_development/MWM/MWM Master Sheet.csv')
@@ -95,7 +140,20 @@ ggplot(MWM) + aes( x = day_cat, y= CIPL_Scores, fill = Strain, color=Strain) +
   stat_summary(fun.data = mean_se, geom = "errorbar", width = .8, size = 2.5,position = position_dodge(width=0.9)) +
   scale_fill_manual(values = custom_colors) + scale_color_manual(values = custom_colors)  + 
   geom_point(position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.9),shape=21, size= 1.5, alpha = 0.8) +
-  new_scale_color() + 
+  scale_fill_manual(values = c('white', 'white'))+
+  facet_wrap(~Age.months.)  +
+  theme(legend.position="none")+ 
+  ggtitle('All Trails (trial treated as the subj.)')
+
+
+
+ggplot(MWM) + aes( x = day_cat, y= CIPL_Scores, fill = Strain, color=Strain) +  
+  stat_summary(fun.data = mean_se, geom = "errorbar", width = .8, size = 2.5,position = position_dodge(width=0.9)) +
+  scale_fill_manual(values = custom_colors) + scale_color_manual(values = custom_colors)  + 
+  geom_dotplot(position = position_dodge(width=0.9),
+               binaxis='y', 
+               stackdir='center', 
+               dotsize = .5) + 
   scale_fill_manual(values = c('white', 'white'))+
   facet_wrap(~Age.months.)  +
   theme(legend.position="none")+ 
@@ -141,8 +199,8 @@ TMP <- subset(MWM,trial_num < 7 & X_Day < 5) # do this if you only want to compu
 #TMP <- subset(MWM, trial_num < 3)  # do this if you only want to compute performance based on the first 2 trials.
 #titstr = 'trial 1'
 #TMP <- subset(MWM, trial_num == 1)  # do this if you only want to compute performance based on the first 2 trials.
-titstr = 'trial7' # This is for analyzing the probe trial only.
-TMP <- subset(MWM, trial_num == 7)  # do this if you only want to compute performance based on the first 2 trials.
+#titstr = 'trial7' # This is for analyzing the probe trial only.
+#TMP <- subset(MWM, trial_num == 7)  # do this if you only want to compute performance based on the first 2 trials.
 
 
 MWM_DAY <- TMP %>% group_by(animalID, Age.months., day_cat, Strain) %>% 
@@ -187,48 +245,18 @@ MWM_DAY_tr56$LearnCIPL =  MWM_DAY_tr56$mn_CIPL - MWM_DAY_tr12$mn_CIPL
 MWM_DAY_tr56$LearnTimeInSouth =  MWM_DAY_tr56$mn_TIS - MWM_DAY_tr12$mn_TIS
 
 # CIPL: 
-ggplot(MWM_DAY, aes( x = day_cat, y= mn_CIPL,  colour = Strain, shape =Strain)) + 
-  stat_summary(fun.data = mean_se, geom = "errorbar", width = .8, size = 1.8, position = position_dodge(width=0.9)) +
-  scale_color_manual(values = custom_colors) +scale_shape_manual(values = c(21,22)) + 
-  geom_point(position = position_jitterdodge(jitter.width = 0.3, dodge.width = 0.9), size = 2.2, alpha = 0.65, stroke = 1) + 
-  facet_wrap(~Age.months.) +
-  theme(legend.position="none")+ 
-  ggtitle(titstr)
-
-ggplot(MWM_DAY, aes( x = day_cat, y= sm_goal_cross,  colour = Strain, shape =Strain)) + 
-  stat_summary(fun.data = mean_se, geom = "errorbar", width = .8, size = 1.8, position = position_dodge(width=0.9)) +
-  scale_color_manual(values = custom_colors) + scale_shape_manual(values = c(21,22)) + 
-  geom_point(position = position_jitterdodge(jitter.width = 0.3, dodge.width = 0.9), size = 2.2, alpha = 0.65, stroke = 1) + 
-  facet_wrap(~Age.months.) +
-  theme(legend.position="none")+ 
-  ggtitle(titstr)
+plot_MWM1(MWM_DAY,MWM_DAY$mn_CIPL,'CIPL', titstr )
+#plot_MWM_violin(MWM_DAY,MWM_DAY$mn_CIPL,'CIPL', titstr )
+#plot_MWM_box(MWM_DAY,MWM_DAY$mn_CIPL,'CIPL', titstr )
+# number of goal crosses. 
+plot_MWM1(MWM_DAY,MWM_DAY$sm_goal_cross,'goal crosses',titstr )
 
 # Show the learning within each day - difference between the last 2 and first 2 trials. Proportion of time in quadrant.
-ggplot(MWM_DAY_tr56, aes( x = day_cat, y= LearnCIPL,  colour = Strain, shape =Strain)) + 
-  stat_summary(fun.data = mean_se, geom = "errorbar", width = .8, size = 1.8, position = position_dodge(width=0.9)) +
-  scale_color_manual(values = custom_colors) +scale_shape_manual(values = c(21,22)) + 
-  geom_point(position = position_jitterdodge(jitter.width = 0.3, dodge.width = 0.9), size = 2.2, alpha = 0.65, stroke = 1) + 
-  facet_wrap(~Age.months.) +
-  theme(legend.position="none")+ 
-  ggtitle(titstr)
+plot_MWM1(MWM_DAY_tr56,MWM_DAY_tr56$LearnCIPL,'LearnCIPL',titstr )
 
-# Show the learning within each day - difference between the last 2 and first 2 trials. CIPL
-ggplot(MWM_DAY_tr56, aes( x = day_cat, y= LearnTimeInSouth,  colour = Strain, shape =Strain)) + 
-  stat_summary(fun.data = mean_se, geom = "errorbar", width = .8, size = 1.8, position = position_dodge(width=0.9)) +
-  scale_color_manual(values = custom_colors) +scale_shape_manual(values = c(21,22)) + 
-  geom_point(position = position_jitterdodge(jitter.width = 0.3, dodge.width = 0.9), size = 2.2, alpha = 0.65, stroke = 1) + 
-  facet_wrap(~Age.months.) +
-  theme(legend.position="none")+ 
-  ggtitle(titstr)
+# Show the learning within each day - difference between the last 2 and first 2 trials. CIP
+plot_MWM1(MWM_DAY_tr56,MWM_DAY_tr56$LearnTimeInSouth,'LearnTimeInSouth',titstr )
 
-ggplot(MWM_DAY, aes( x = day_cat, y= mn_CIPL, fill =  Strain, colour = Strain)) + 
-  geom_boxplot(position = position_dodge(width = 0.9)) +   scale_fill_manual(values = custom_colors) +
-  geom_point(position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.9), size = 1.8, alpha = .7 ) + 
-  new_scale_color() + 
-  scale_fill_manual(values = c('white', 'white'))+
-  scale_color_manual(values = c('black', 'black'))+
-  facet_wrap(~Age.months.) +
-  ggtitle(titstr)
 
 # Correlation between CIPL and other scores.
 # What correlates the best with CIPL?
@@ -243,28 +271,16 @@ ggplot(data = MWM_DAY, aes(x =mn_TIS, y = mn_CIPL, color = Strain)) + geom_point
 
 
 # mn_TSmN
-ggplot(MWM_DAY, aes( x = day_cat, y= mn_TSmN, fill =  Strain, colour = Strain)) + geom_boxplot(position = position_dodge(width = 0.9)) + 
-  geom_point(position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.9), size = 1.8, alpha = .7 ) + 
-  facet_wrap(~Age.months.) + scale_fill_manual(values = custom_colors) + scale_color_manual(values = c(marker_color, marker_color)) + 
-  ggtitle(titstr)
+plot_MWM1(MWM_DAY,MWM_DAY$mn_TSmN,'mn_TSmN',titstr )
+plot_MWM_box(MWM_DAY,MWM_DAY$mn_TSmN,'mn_TSmN',titstr )
 
-# Allocentric - only really shows up for all trials since in 2 trials, you can only get values of 0, .5, and 1 at the most.
-ggplot(MWM_DAY, aes( x = day_cat, y= mn_allocentric, fill =  Strain, colour = Strain)) + geom_boxplot(position = position_dodge(width = 0.9)) + 
-  geom_point(position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.9), size = 1.8, alpha = .7 ) + 
-  facet_wrap(~Age.months.) + scale_fill_manual(values = custom_colors) + scale_color_manual(values = c(marker_color, marker_color)) + 
-  ggtitle(titstr)
+# Allocentric - only really shows up for all trials since in 2 trials, you can only get values of 0, .5, and 1 at the most
+plot_MWM_box(MWM_DAY,MWM_DAY$mn_allocentric,'mn_allocentric',titstr )
+
 
 # Proportion of time in the south quadrant
-ggplot(MWM_DAY, aes( x = day_cat, y= mn_TIS, fill =  Strain, colour = Strain)) + geom_boxplot(position = position_dodge(width = 0.9)) + 
-  geom_point(position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.9), size = 1.8, alpha = .7 ) + 
-  facet_wrap(~Age.months.) + scale_fill_manual(values = custom_colors) + scale_color_manual(values = c(marker_color, marker_color)) + 
-  ggtitle(titstr)
-# Latency to the goal.
 
-ggplot(MWM_DAY, aes( x = day_cat, y= mn_latency, fill =  Strain, colour = Strain)) + geom_boxplot(position = position_dodge(width = 0.9)) + 
-  geom_point(position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.9), size = 1.8, alpha = .7 ) + 
-  facet_wrap(~Age.months.) + scale_fill_manual(values = custom_colors) + scale_color_manual(values = c(marker_color, marker_color)) + 
-  ggtitle(titstr)
+plot_MWM1(MWM_DAY,MWM_DAY$mn_TIS,'mn_TIS',titstr )
 
 # sum of allocentric and escape using MWM_DAY_COMBINE_MICE
 ggplot(MWM_DAY_COMBINE_MICE, aes( x = day_cat, y= sum_allocentric, fill =  Strain, colour = Strain)) + 
@@ -279,7 +295,6 @@ ggplot(MWM_DAY_COMBINE_MICE, aes( x = day_cat, y= sum_allocentric/sum_escape, fi
   geom_col(position = position_dodge(width = 0.9), color = 'black') + scale_fill_manual(values = custom_colors) + facet_wrap(~Age.months.) +
   ggtitle(titstr)
 
-
 ggplot(MWM_DAY_COMBINE_MICE_PROBE4, aes( x = Strain, y= sum_escape, fill =  Strain, colour = Strain)) + 
   geom_col(position = position_dodge(width = 0.9), color = 'black') + scale_fill_manual(values = custom_colors) + facet_wrap(~Age.months.)  +
   ggtitle(titstr)
@@ -292,19 +307,16 @@ ggplot(MWM_DAY_COMBINE_MICE_PROBE6, aes( x = Strain, y= sum_allocentric, fill = 
 
 # FIGURE 1: One graph of ONLY age for the wild type INTACT
 MWM_INTACT <- subset(MWM_DAY, Strain == 'INTACT') 
-ggplot(MWM_INTACT, aes( x = day_cat, y= mn_CIPL, fill =  Strain, colour = Strain)) + geom_boxplot(position = position_dodge(width = 0.9)) + 
-  geom_point(position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.9), size = 1.8, alpha = .7 ) + 
-  facet_wrap(~Age.months.) + scale_fill_manual(values = custom_colors) + scale_color_manual(values = c(marker_color, marker_color)) + 
-  ggtitle(paste(titstr, ' INTACT only'))
+plot_MWM1(MWM_INTACT,MWM_INTACT$mn_CIPL,'mn_CIPL',paste(titstr, ' INTACT only') )
+#plot_MWM_box(MWM_INTACT,MWM_INTACT$mn_CIPL,'mn_CIPL',titstr )
+
 
 # FIGURE 1: One graph of ONLY age for the wild type INTACT
-ggplot(MWM_INTACT, aes( x = day_cat, y= mn_TIS, fill =  Strain, colour = Strain)) + geom_boxplot(position = position_dodge(width = 0.9)) + 
-  geom_point(position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.9), size = 1.8, alpha = .7 ) + 
-  facet_wrap(~Age.months.) + scale_fill_manual(values = custom_colors) + scale_color_manual(values = c(marker_color, marker_color)) + 
-  ggtitle(paste(titstr, ' INTACT only'))
+plot_MWM1(MWM_INTACT,MWM_INTACT$mn_TIS,'mn_TIS',paste(titstr, ' INTACT only') )
 
 # Now restrict to just Day 4
 MWM_INTACT_Day4 <- subset(MWM_DAY, Strain == 'INTACT' & day_cat == 4) 
+
 ggplot(MWM_INTACT_Day4, aes( x = factor(Age.months.), y= mn_CIPL, fill =  Strain, colour = Strain)) + geom_boxplot(position = position_dodge(width = 0.9)) + 
   geom_point(position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.9), size = 1.8, alpha = .7 ) + 
   scale_fill_manual(values = custom_colors) + scale_color_manual(values = c(marker_color, marker_color)) + 
