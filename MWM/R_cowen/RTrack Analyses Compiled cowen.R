@@ -108,9 +108,6 @@ Rtrack::export_results(Experiment9M, file = "Results/9 Months - Full/9MCombined_
 
 Rtrack::export_results(Experiment9M, StrategiesCombined9M, file = "Results/9 Months - Full/9MCombined_StrategiesResults.xlsx")
 
-
-
-
 #Bulk Processing Combined 14 Month : Track 57 is empty or too short
 Experiment14M = Rtrack::read_experiment("C:/Users/Moreau/Desktop/WaterMazeAnalysis/R Files/ExperimentCombined14mFull.xlsx", data.dir = "C:/Users/Moreau/Desktop/WaterMazeAnalysis/N14Months/NData")
 
