@@ -5,6 +5,9 @@
 # How are the probe trials assessed - should it not be the number of traversals over the target?
 # Generate statistics 
 # Konsolaki uses a Box-Cox transform (EM) to make data normal -seems overkill, but should look into. in MASS, called boxcox()
+#
+# Include the probability for each strategy. This is in the 'confidence' value.
+#
 # There are a tone of NAs in latency to goal - why? > 60? I think latency is not somethign we can analyze - it's not calculated completely.
 ###########################################################
 # Cowen - 2025 based on Gabriel's curation of the main data table.
@@ -118,6 +121,19 @@ MWM$time.in.s.minus.n.norm = MWM$time.in.s.quadrant.norm - MWM$time.in.n.quadran
 
 MWM$strategy_cat = factor(MWM$strategy)
 MWM$strategy_cat <- recode(MWM$strategy_cat, "1" = "thig", "2" = "circ", "3" = "rand", "4" = "scan", "5" = "chain", "6" = "dir_search", "7" = "corpth", "8" = "dirpath", "9" = "persev")
+colnames(MWM)[colnames(MWM) == 'X1'] <- 'thig_conf'
+colnames(MWM)[colnames(MWM) == 'X2'] <- 'circ_conf'
+colnames(MWM)[colnames(MWM) == 'X3'] <- 'rand_conf'
+colnames(MWM)[colnames(MWM) == 'X4'] <- 'scan_conf'
+colnames(MWM)[colnames(MWM) == 'X5'] <- 'chain_conf'
+colnames(MWM)[colnames(MWM) == 'X6'] <- 'dir_search_conf'
+colnames(MWM)[colnames(MWM) == 'X7'] <- 'correc_conf'
+colnames(MWM)[colnames(MWM) == 'X8'] <- 'dir_path_conf'
+colnames(MWM)[colnames(MWM) == 'X9'] <- 'persev_conf'
+
+MWM$allocentric_conf = MWM$dir_path_conf + MWM$dir_search_conf + MWM$correc_conf # X7 = corrected path
+MWM$escape_conf = MWM$thig_conf + MWM$circ_conf + MWM$rand_conf # X7 = corrected path
+
 table(MWM$strategy_cat)
 
 # This coding is useful for calculating the percent of time each strategy is used.
@@ -133,7 +149,9 @@ MWM$is_direct_path     = (MWM$strategy == 8)*1
 MWM$is_perseverance    = (MWM$strategy == 9)*1
 
 MWM$is_allocentric  = MWM$is_direct_path + MWM$is_directed_search + MWM$is_corrected_path 
+
 MWM$is_escape       = MWM$is_thigmotaxis + MWM$is_circling + MWM$is_random_path
+
 
 
 ggplot(MWM) + aes( x = day_cat, y= CIPL_Scores, fill = Strain, color=Strain) +  
@@ -145,6 +163,15 @@ ggplot(MWM) + aes( x = day_cat, y= CIPL_Scores, fill = Strain, color=Strain) +
   theme(legend.position="none")+ 
   ggtitle('All Trails (trial treated as the subj.)')
 
+
+ggplot(MWM) + aes( x = day_cat, y= dir_path_conf, fill = Strain, color=Strain) +  
+  stat_summary(fun.data = mean_se, geom = "errorbar", width = .8, size = 2.5,position = position_dodge(width=0.9)) +
+  scale_fill_manual(values = custom_colors) + scale_color_manual(values = custom_colors)  + 
+  geom_point(position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.9),shape=21, size= 1.5, alpha = 0.8) +
+  scale_fill_manual(values = c('white', 'white'))+
+  facet_wrap(~Age.months.)  +
+  theme(legend.position="none")+ 
+  ggtitle('All Trails (trial treated as the subj.)')
 
 
 ggplot(MWM) + aes( x = day_cat, y= CIPL_Scores, fill = Strain, color=Strain) +  
@@ -207,6 +234,10 @@ MWM_DAY <- TMP %>% group_by(animalID, Age.months., day_cat, Strain) %>%
   summarize(mn_thig = mean(is_thigmotaxis), mn_circ = mean(is_circling) , mn_rnd = mean(is_random_path) , 
             mn_scan = mean(is_scanning) , mn_chain = mean(is_chaining) , mn_direct = mean(is_directed_search) , 
             mn_cor_path = mean(is_corrected_path ), mn_dir_path = mean(is_direct_path), mn_persev = mean(is_perseverance), 
+            mn_thig_c = mean(thig_conf), mn_circ_c = mean(circ_conf) , mn_rnd_c = mean(rand_conf) , 
+            mn_scan_c = mean(scan_conf) , mn_chain_c = mean(chain_conf) , mn_direct_c = mean(dir_search_conf) , 
+            mn_cor_path_c = mean(correc_conf ), mn_dir_path_c = mean(dir_path_conf), mn_persev_c = mean(persev_conf), 
+            mn_allocentric_conf  = mean(allocentric_conf ), mn_escape_conf  = mean(escape_conf ),
             mn_CIPL = mean(CIPL_Scores), mn_allocentric = mean(is_allocentric), sum_allocentric = sum(is_allocentric), mn_escape = mean(is_escape),
             mn_TIE =  mean(time.in.e.quadrant.norm), mn_TIW = mean(time.in.w.quadrant.norm),mn_TIN = mean(time.in.n.quadrant.norm),
             mn_TIS = mean(time.in.s.quadrant.norm), mn_TSmN = mean(time.in.s.minus.n.norm), mn_latency = mean(latency.to.goal),
@@ -246,7 +277,11 @@ MWM_DAY_tr56$LearnTimeInSouth =  MWM_DAY_tr56$mn_TIS - MWM_DAY_tr12$mn_TIS
 
 # CIPL: 
 plot_MWM1(MWM_DAY,MWM_DAY$mn_CIPL,'CIPL', titstr )
-#plot_MWM_violin(MWM_DAY,MWM_DAY$mn_CIPL,'CIPL', titstr )
+plot_MWM1(MWM_DAY,MWM_DAY$mn_allocentric_conf,'mn_allocentric_conf', titstr )
+plot_MWM1(MWM_DAY,MWM_DAY$mn_escape_conf,'mn_escape_conf', titstr )
+#plot_MWM1(MWM_DAY,MWM_DAY$mn_direct_c,'mn_direct_c', titstr )
+#plot_MWM1(MWM_DAY,MWM_DAY$mn_dir_path_c,'mn_dir_path_c', titstr )
+#plot_MWM_violin(MWM_DAY,MWM_DAY$mn_CIPL,'mn_CIPL', titstr )
 #plot_MWM_box(MWM_DAY,MWM_DAY$mn_CIPL,'CIPL', titstr )
 # number of goal crosses. 
 plot_MWM1(MWM_DAY,MWM_DAY$sm_goal_cross,'goal crosses',titstr )
@@ -256,7 +291,6 @@ plot_MWM1(MWM_DAY_tr56,MWM_DAY_tr56$LearnCIPL,'LearnCIPL',titstr )
 
 # Show the learning within each day - difference between the last 2 and first 2 trials. CIP
 plot_MWM1(MWM_DAY_tr56,MWM_DAY_tr56$LearnTimeInSouth,'LearnTimeInSouth',titstr )
-
 
 # Correlation between CIPL and other scores.
 # What correlates the best with CIPL?
