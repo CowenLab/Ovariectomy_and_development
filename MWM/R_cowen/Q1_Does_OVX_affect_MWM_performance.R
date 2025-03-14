@@ -20,6 +20,8 @@ library(lsr)
 library(dplyr)  
 library(tidyverse)
 library(ggthemes)
+library(ggsignif)
+
 #library(ggnewscale)
 
 theme_set(theme_classic(base_size = 16))
@@ -37,6 +39,7 @@ plot_MWM1 <- function(TBL,vbl,ylab_txt, titstr){
     facet_wrap(~TBL$Age.months.) + 
     ylab(ylab_txt) +
     theme(legend.position="none")+ 
+    geom_signif(comparisons = list(c("INTACT", "OVX")), map_signif_level=TRUE)+
     ggtitle(titstr)
 }
 
