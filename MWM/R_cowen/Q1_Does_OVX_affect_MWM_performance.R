@@ -21,11 +21,30 @@ library(dplyr)
 library(tidyverse)
 library(ggthemes)
 library(ggsignif)
-
+# library(rstatix)
+# library(stringr)
+# install.packages('datarium')
+# library(lme4)
+# library(lmerTest)
 #library(ggnewscale)
 
 theme_set(theme_classic(base_size = 16))
 #theme_set(theme_minimal(base_size = 16))
+custom_colors <- c(INTACT = "#000000",OVX = "#9f044d") 
+custom_colors2 <- c("#000000","#9f044d") 
+marker_color <- "#b5b2b3"
+#marker_color <- "white"
+
+
+
+data_dir = 'C:/Users/cowen/Documents/GitHub/Ovariectomy_and_development/MWM/'
+code_dir ='C:/Users/cowen/Documents/GitHub/Ovariectomy_and_development/MWM/R_cowen/'
+
+# Load the data...
+source(paste0(code_dir,'Load_MWM_Data.R'))
+
+# Define the plot functions.
+
 plot_MWM1 <- function(TBL,vbl,ylab_txt, titstr){
   ggplot(TBL, aes( x = TBL$day_cat, y= vbl,  colour = TBL$Strain, shape =TBL$Strain)) + 
     stat_summary(fun.data = mean_se, geom = "errorbar", width = .8, size = 1.8, position = position_dodge(width=0.9)) +
@@ -39,10 +58,30 @@ plot_MWM1 <- function(TBL,vbl,ylab_txt, titstr){
     facet_wrap(~TBL$Age.months.) + 
     ylab(ylab_txt) +
     theme(legend.position="none")+ 
-    geom_signif(comparisons = list(c("INTACT", "OVX")), map_signif_level=TRUE)+
+    geom_signif(comparisons = list(c("INTACT", "OVX")), map_signif_level=TRUE, test = 't.test')+
     ggtitle(titstr)
 }
-
+MWM_stats_1to4 <- function(TBL,vbl){
+  #vbl = 'mn_CIPL'
+  months = sort(unique(TBL$Age.months.)) 
+  for(iMonth in months){
+    print('----------')
+    print(paste('MONTH: ' , iMonth))
+    print('----------')
+    df = subset(TBL, Age.months. == iMonth)
+    mod_str = as.formula(paste(vbl,'~ Strain * day_cat + Error(animalID/(Strain * day_cat))'))
+    mod <- aov(mod_str,data = df )
+    print(summary(mod))
+    
+    mod_str2 = as.formula(paste(vbl,'~ Strain '))
+    dfd = subset(TBL, Age.months. == iMonth & day_cat == 3)
+    print(paste('ttest day 3 p =', t.test(mod_str2,dfd)$p.value))
+    
+    dfd = subset(TBL, Age.months. == iMonth & day_cat == 4)
+    print(paste('ttest day 4 p =', t.test(mod_str2,dfd)$p.value))
+    
+  }
+}
 
 plot_MWM_box <- function(TBL,vbl,ylab_txt, titstr){
   
@@ -78,82 +117,6 @@ plot_MWM_violin <- function(TBL,vbl,ylab_txt, titstr){
 # NOTE
 # 9 mo are the only ones that had both probes.
 # ("24" = Trial before probe, "25" Probe trial, "37" Trial before probe after reversal, "38" last probe after removing platform))
-custom_colors <- c(INTACT = "#000000",OVX = "#9f044d") 
-custom_colors2 <- c("#000000","#9f044d") 
-marker_color <- "#b5b2b3"
-#marker_color <- "white"
-
-# LOAD AND PROCESS DATA
-MWM <- read.csv('C:/Users/cowen/Documents/GitHub/Ovariectomy_and_development/MWM/MWM Master Sheet.csv')
-# Rename SHAM to INTACT
-MWM$Strain <- recode(MWM$Strain, SHAM = 'INTACT')
-
-#First Table Setup
-# This is done because trials were labeled by Gabriel sequentially regardless of day so that trial 20 on day 1 
-# would result in day 2 starting with trial 21.
-MWM$trial_num = MWM$X_Trial
-MWM$trial_num[MWM$trial_num > 6 & MWM$trial_num <= 12 ] = MWM$trial_num[MWM$trial_num > 6 & MWM$trial_num <= 12 ]-6
-MWM$trial_num[MWM$trial_num > 12 & MWM$trial_num <= 18 ] = MWM$trial_num[MWM$trial_num > 12 & MWM$trial_num <= 18 ]-12
-MWM$trial_num[MWM$trial_num > 18 & MWM$trial_num <= 25 ] = MWM$trial_num[MWM$trial_num > 18 & MWM$trial_num <= 25 ]-18
-MWM$trial_num[MWM$trial_num > 25 & MWM$trial_num <= 31 ] = MWM$trial_num[MWM$trial_num > 25 & MWM$trial_num <= 31 ]-25
-MWM$trial_num[MWM$trial_num > 31 & MWM$trial_num <= 38 ] = MWM$trial_num[MWM$trial_num > 31 & MWM$trial_num <= 38 ]-31
-
-#MWM <- subset(TABLExF_Full, trial_num < 7)
-# This is unnecessary as there is no trial 8 or larger, but a failsafe just in case
-#MWM <- subset(TABLExF_Full, trial_num < 8)
-
-MWM$Strain   = factor(MWM$Strain,levels = c('INTACT', 'OVX'))
-MWM$strategy_cat = factor(MWM$name)
-MWM$day_cat  = factor(MWM$X_Day)
-MWM$age_mo_cat  = factor(MWM$Age.months.)
-MWM$animalID = factor(MWM$X_TargetID) # age_animal_month
-MWM$Trial = factor(MWM$X_Trial) # This is the original trial that ignores day boundaries to be continuous until end of experiment.
-
-#MWM$time.in.s.quadrant # South is the first goal quadrant and then after the reversal the North becomes the goal. 
-#MWM$time.in.n.quadrant
-#MWM$time.in.w.quadrant
-#MWM$time.in.e.quadrant
-# Determine the proportion of time in a quadrant.
-S = MWM$time.in.e.quadrant + MWM$time.in.w.quadrant + MWM$time.in.n.quadrant + MWM$time.in.s.quadrant
-MWM$time.in.e.quadrant.norm = 100*MWM$time.in.e.quadrant/S
-MWM$time.in.w.quadrant.norm = 100*MWM$time.in.w.quadrant/S
-MWM$time.in.n.quadrant.norm = 100*MWM$time.in.n.quadrant/S
-MWM$time.in.s.quadrant.norm = 100*MWM$time.in.s.quadrant/S
-
-MWM$time.in.s.minus.n.norm = MWM$time.in.s.quadrant.norm - MWM$time.in.n.quadrant.norm
-
-MWM$strategy_cat = factor(MWM$strategy)
-MWM$strategy_cat <- recode(MWM$strategy_cat, "1" = "thig", "2" = "circ", "3" = "rand", "4" = "scan", "5" = "chain", "6" = "dir_search", "7" = "corpth", "8" = "dirpath", "9" = "persev")
-colnames(MWM)[colnames(MWM) == 'X1'] <- 'thig_conf'
-colnames(MWM)[colnames(MWM) == 'X2'] <- 'circ_conf'
-colnames(MWM)[colnames(MWM) == 'X3'] <- 'rand_conf'
-colnames(MWM)[colnames(MWM) == 'X4'] <- 'scan_conf'
-colnames(MWM)[colnames(MWM) == 'X5'] <- 'chain_conf'
-colnames(MWM)[colnames(MWM) == 'X6'] <- 'dir_search_conf'
-colnames(MWM)[colnames(MWM) == 'X7'] <- 'correc_conf'
-colnames(MWM)[colnames(MWM) == 'X8'] <- 'dir_path_conf'
-colnames(MWM)[colnames(MWM) == 'X9'] <- 'persev_conf'
-
-MWM$allocentric_conf = MWM$dir_path_conf + MWM$dir_search_conf + MWM$correc_conf # X7 = corrected path
-MWM$escape_conf = MWM$thig_conf + MWM$circ_conf + MWM$rand_conf # X7 = corrected path
-
-table(MWM$strategy_cat)
-
-# This coding is useful for calculating the percent of time each strategy is used.
-# Need to *1 to convert to a number instead of a logical.
-MWM$is_thigmotaxis = (MWM$strategy == 1)*1
-MWM$is_circling    = (MWM$strategy == 2)*1
-MWM$is_random_path = (MWM$strategy == 3)*1
-MWM$is_scanning    = (MWM$strategy == 4)*1
-MWM$is_chaining    = (MWM$strategy == 5)*1
-MWM$is_directed_search = (MWM$strategy == 6)*1
-MWM$is_corrected_path  = (MWM$strategy == 7)*1
-MWM$is_direct_path     = (MWM$strategy == 8)*1
-MWM$is_perseverance    = (MWM$strategy == 9)*1
-
-MWM$is_allocentric  = MWM$is_direct_path + MWM$is_directed_search + MWM$is_corrected_path 
-
-MWM$is_escape       = MWM$is_thigmotaxis + MWM$is_circling + MWM$is_random_path
 
 
 
@@ -167,7 +130,7 @@ ggplot(MWM) + aes( x = day_cat, y= CIPL_Scores, fill = Strain, color=Strain) +
   ggtitle('All Trails (trial treated as the subj.)')
 
 
-ggplot(MWM) + aes( x = day_cat, y= dir_path_conf, fill = Strain, color=Strain) +  
+ggplot(MWM) + aes( x = day_cat, y= entropy_strat, fill = Strain, color=Strain) +  
   stat_summary(fun.data = mean_se, geom = "errorbar", width = .8, size = 2.5,position = position_dodge(width=0.9)) +
   scale_fill_manual(values = custom_colors) + scale_color_manual(values = custom_colors)  + 
   geom_point(position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.9),shape=21, size= 1.5, alpha = 0.8) +
@@ -244,7 +207,11 @@ MWM_DAY <- TMP %>% group_by(animalID, Age.months., day_cat, Strain) %>%
             mn_CIPL = mean(CIPL_Scores), mn_allocentric = mean(is_allocentric), sum_allocentric = sum(is_allocentric), mn_escape = mean(is_escape),
             mn_TIE =  mean(time.in.e.quadrant.norm), mn_TIW = mean(time.in.w.quadrant.norm),mn_TIN = mean(time.in.n.quadrant.norm),
             mn_TIS = mean(time.in.s.quadrant.norm), mn_TSmN = mean(time.in.s.minus.n.norm), mn_latency = mean(latency.to.goal),
-            sm_goal_cross = sum(goal.crossings))
+            sm_goal_cross = sum(goal.crossings), mn_entropy = mean(entropy_strat) )
+
+MWM_DAY$animalID <- factor(MWM_DAY$animalID) # gets rid of empty factors
+MWM_DAY$day_cat <- factor(MWM_DAY$day_cat) # gets rid of empty factors
+MWM_DAY$Strain <- factor(MWM_DAY$Strain) # gets rid of empty factors
 
 MWM_DAY_COMBINE_MICE <- TMP %>% group_by( Age.months., day_cat, Strain) %>% 
   summarize( sum_allocentric = sum(is_allocentric), sum_escape = sum(is_escape))
@@ -278,10 +245,21 @@ MWM_DAY_tr56 <- subset(MWM, trial_num > 4 & trial_num < 7 )  %>% group_by(animal
 MWM_DAY_tr56$LearnCIPL =  MWM_DAY_tr56$mn_CIPL - MWM_DAY_tr12$mn_CIPL
 MWM_DAY_tr56$LearnTimeInSouth =  MWM_DAY_tr56$mn_TIS - MWM_DAY_tr12$mn_TIS
 
+# General approach to stats:
+# If there is a main effect, then it is legit to do post hoc. If no main effect, no post hoc.
+
 # CIPL: 
 plot_MWM1(MWM_DAY,MWM_DAY$mn_CIPL,'CIPL', titstr )
+MWM_stats_1to4(MWM_DAY,'mn_CIPL')
+  
+
 plot_MWM1(MWM_DAY,MWM_DAY$mn_allocentric_conf,'mn_allocentric_conf', titstr )
+MWM_stats_1to4(MWM_DAY,'mn_allocentric_conf')
+
 plot_MWM1(MWM_DAY,MWM_DAY$mn_escape_conf,'mn_escape_conf', titstr )
+MWM_stats_1to4(MWM_DAY,'mn_escape_conf')
+
+#plot_MWM1(MWM_DAY,MWM_DAY$mn_entropy,'mn_entropy', titstr )
 #plot_MWM1(MWM_DAY,MWM_DAY$mn_direct_c,'mn_direct_c', titstr )
 #plot_MWM1(MWM_DAY,MWM_DAY$mn_dir_path_c,'mn_dir_path_c', titstr )
 #plot_MWM_violin(MWM_DAY,MWM_DAY$mn_CIPL,'mn_CIPL', titstr )
@@ -465,5 +443,24 @@ ggplot(MWM_DAY_month, aes( x = day_cat, y= mn_CIPL, fill =  Strain, colour = Str
 
 # All below may not be necessary - check 
 # Within subject ANOVA. see https://www.r-bloggers.com/2025/02/two-way-repeated-measures-anova-in-r/
-model.aov <- aov(mn_CIPL ~ Strain * day_cat + Error(animalID/(Strain * day_cat)),data = MWM_DAY_month)
-summary(model.aov)
+vbl = 'mn_CIPL'
+months = sort(unique(MWM_DAY$Age.months.)) 
+for(iMonth in months){
+  print(paste('MONTH: ' , iMonth))
+  df = subset(MWM_DAY, Age.months. == iMonth)
+  mod <- aov(mn_CIPL ~ Strain * day_cat + Error(animalID/(Strain * day_cat)),data = df )
+  print(summary(mod))
+  print('----------')
+}
+
+vbl = 'mn_CIPL'
+months = sort(unique(MWM_DAY$Age.months.)) 
+for(iMonth in months){
+  print(paste('MONTH: ' , iMonth))
+  df = subset(MWM_DAY, Age.months. == iMonth)
+  mod_str = as.formula(paste(vbl,'~ Strain * day_cat + Error(animalID/(Strain * day_cat))'))
+  mod <- aov(mod_str,data = df )
+  print(summary(mod))
+  print('----------')
+}
+
