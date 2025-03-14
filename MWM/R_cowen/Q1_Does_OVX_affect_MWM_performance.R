@@ -259,6 +259,11 @@ MWM_stats_1to4(MWM_DAY,'mn_allocentric_conf')
 plot_MWM1(MWM_DAY,MWM_DAY$mn_escape_conf,'mn_escape_conf', titstr )
 MWM_stats_1to4(MWM_DAY,'mn_escape_conf')
 
+# mn_TSmN
+plot_MWM1(MWM_DAY,MWM_DAY$mn_TSmN,'mn_TSmN',titstr )
+MWM_stats_1to4(MWM_DAY,'mn_TSmN')
+
+
 #plot_MWM1(MWM_DAY,MWM_DAY$mn_entropy,'mn_entropy', titstr )
 #plot_MWM1(MWM_DAY,MWM_DAY$mn_direct_c,'mn_direct_c', titstr )
 #plot_MWM1(MWM_DAY,MWM_DAY$mn_dir_path_c,'mn_dir_path_c', titstr )
@@ -277,6 +282,8 @@ plot_MWM1(MWM_DAY_tr56,MWM_DAY_tr56$LearnTimeInSouth,'LearnTimeInSouth',titstr )
 # What correlates the best with CIPL?
 ggplot(data = MWM_DAY, aes(x =mn_allocentric, y = mn_CIPL, color = Strain)) + geom_point()+ facet_wrap(~Age.months.) +  geom_smooth() + 
   scale_color_manual(values = custom_colors) + ggtitle(paste (titstr,'Correlation between measures'))
+ggplot(data = MWM_DAY, aes(x =mn_allocentric_conf, y = mn_CIPL, color = Strain)) + geom_point()+ facet_wrap(~Age.months.) +  geom_smooth() + 
+  scale_color_manual(values = custom_colors) + ggtitle(paste (titstr,'Correlation between measures'))
 ggplot(data = MWM_DAY, aes(x =mn_escape, y = mn_CIPL, color = Strain)) + geom_point()+ facet_wrap(~Age.months.) +  geom_smooth() + 
   scale_color_manual(values = custom_colors) + ggtitle(paste (titstr,'Correlation between measures'))
 ggplot(data = MWM_DAY, aes(x =mn_TIS, y = mn_CIPL, color = Strain)) + geom_point()+ facet_wrap(~Age.months.) +  geom_smooth() + 
@@ -285,9 +292,7 @@ ggplot(data = MWM_DAY, aes(x =mn_TIS, y = mn_CIPL, color = Strain)) + geom_point
 #ggplot(data = TB, aes(x =escape, y = mn_CIPL, color = Strain)) + geom_point()+ facet_wrap(~Age.months.) +  geom_smooth()
 
 
-# mn_TSmN
-plot_MWM1(MWM_DAY,MWM_DAY$mn_TSmN,'mn_TSmN',titstr )
-plot_MWM_box(MWM_DAY,MWM_DAY$mn_TSmN,'mn_TSmN',titstr )
+
 
 # Allocentric - only really shows up for all trials since in 2 trials, you can only get values of 0, .5, and 1 at the most
 plot_MWM_box(MWM_DAY,MWM_DAY$mn_allocentric,'mn_allocentric',titstr )
