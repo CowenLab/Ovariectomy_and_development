@@ -39,6 +39,7 @@ marker_color <- "#b5b2b3"
 
 data_dir = 'C:/Users/cowen/Documents/GitHub/Ovariectomy_and_development/MWM/'
 code_dir ='C:/Users/cowen/Documents/GitHub/Ovariectomy_and_development/MWM/R_cowen/'
+save_dir = 'C:/Temp/'
 
 # Load the data...
 source(paste0(code_dir,'Load_MWM_Data.R'))
@@ -47,18 +48,18 @@ source(paste0(code_dir,'Load_MWM_Data.R'))
 
 plot_MWM1 <- function(TBL,vbl,ylab_txt, titstr){
   ggplot(TBL, aes( x = TBL$day_cat, y= vbl,  colour = TBL$Strain, shape =TBL$Strain)) + 
-    stat_summary(fun.data = mean_se, geom = "errorbar", width = .8, size = 1.8, position = position_dodge(width=0.9)) +
+    stat_summary(fun.data = mean_se, geom = "errorbar", width = .8, size = 1.4, position = position_dodge(width=0.9)) +
     scale_color_manual(values = custom_colors) + 
     scale_shape_manual(values = c(21,22)) + 
-    geom_point(position = position_jitterdodge(jitter.width = 0.3, dodge.width = 0.9), size = 2.2, alpha = 0.65, stroke = 1) + 
+    geom_point(position = position_jitterdodge(jitter.width = 0.3, dodge.width = 0.9), size = 1.4, alpha = 0.25, stroke = 1) + 
     #geom_dotplot(position = position_dodge(width=0.9),
     #             binaxis='y', 
   #               stackdir='center', 
   #               dotsize = 1.4) + 
     facet_wrap(~TBL$Age.months.) + 
     ylab(ylab_txt) +
-    theme(legend.position="none")+ 
-    geom_signif(comparisons = list(c("INTACT", "OVX")), map_signif_level=TRUE, test = 't.test')+
+    theme(legend.position="none") + # , strip.background = element_blank() to get rid of the box around the headers.
+    #geom_signif(comparisons = list(c("INTACT", "OVX")), map_signif_level=TRUE, test = 't.test')+
     ggtitle(titstr)
 }
 MWM_stats_1to4 <- function(TBL,vbl){
@@ -71,14 +72,15 @@ MWM_stats_1to4 <- function(TBL,vbl){
     df = subset(TBL, Age.months. == iMonth)
     mod_str = as.formula(paste(vbl,'~ Strain * day_cat + Error(animalID/(Strain * day_cat))'))
     mod <- aov(mod_str,data = df )
+    print(mod_str)
     print(summary(mod))
     
     mod_str2 = as.formula(paste(vbl,'~ Strain '))
     dfd = subset(TBL, Age.months. == iMonth & day_cat == 3)
-    print(paste('ttest day 3 p =', t.test(mod_str2,dfd)$p.value))
+    print(paste('ttest d3 pbonf =', t.test(mod_str2,dfd)$p.value*2))
     
     dfd = subset(TBL, Age.months. == iMonth & day_cat == 4)
-    print(paste('ttest day 4 p =', t.test(mod_str2,dfd)$p.value))
+    print(paste('ttest d4 pbonf =', t.test(mod_str2,dfd)$p.value*2))
     
   }
 }
@@ -194,75 +196,93 @@ TMP <- subset(MWM,trial_num < 7 & X_Day < 5) # do this if you only want to compu
 #TMP <- subset(MWM, trial_num == 1)  # do this if you only want to compute performance based on the first 2 trials.
 #titstr = 'trial7' # This is for analyzing the probe trial only.
 #TMP <- subset(MWM, trial_num == 7)  # do this if you only want to compute performance based on the first 2 trials.
+group_MWM_by_day <- function(TBL){
+  MWM_DAY <- TBL %>% group_by(animalID, Age.months., day_cat, Strain) %>% 
+    summarize(mn_thig = mean(is_thigmotaxis), mn_circ = mean(is_circling) , mn_rnd = mean(is_random_path) , 
+              mn_scan = mean(is_scanning) , mn_chain = mean(is_chaining) , mn_direct = mean(is_directed_search) , 
+              mn_cor_path = mean(is_corrected_path ), mn_dir_path = mean(is_direct_path), mn_persev = mean(is_perseverance), 
+              mn_thig_c = mean(thig_conf), mn_circ_c = mean(circ_conf) , mn_rnd_c = mean(rand_conf) , 
+              mn_scan_c = mean(scan_conf) , mn_chain_c = mean(chain_conf) , mn_direct_c = mean(dir_search_conf) , 
+              mn_cor_path_c = mean(correc_conf ), mn_dir_path_c = mean(dir_path_conf), mn_persev_c = mean(persev_conf), 
+              mn_allocentric_conf  = mean(allocentric_conf ), mn_escape_conf  = mean(escape_conf ),
+              mn_CIPL = mean(CIPL_Scores), mn_allocentric = mean(is_allocentric), sum_allocentric = sum(is_allocentric), mn_escape = mean(is_escape),
+              mn_TIE =  mean(time.in.e.quadrant.norm), mn_TIW = mean(time.in.w.quadrant.norm),mn_TIN = mean(time.in.n.quadrant.norm),
+              mn_TIS = mean(time.in.s.quadrant.norm), mn_TSmN = mean(time.in.s.minus.n.norm), mn_latency = mean(latency.to.goal),
+              sm_goal_cross = sum(goal.crossings), mn_entropy = mean(entropy_strat) )
+  MWM_DAY$animalID <- factor(MWM_DAY$animalID) # gets rid of empty factors
+  MWM_DAY$day_cat <- factor(MWM_DAY$day_cat) # gets rid of empty factors
+  MWM_DAY$Strain <- factor(MWM_DAY$Strain) # gets rid of empty factors
+  MWM_DAY
+}
+
+MWM_DAY1to6_allT <- group_MWM_by_day(subset(MWM,trial_num < 7 & X_Day < 7)) # titstr = 'days1to4 alltrials'
+MWM_DAY1to4_allT <- group_MWM_by_day(subset(MWM,trial_num < 7 & X_Day < 5)) # titstr = 'days1to4 alltrials'
+MWM_DAY1to4_T12 <- group_MWM_by_day(subset(MWM,trial_num < 3 & X_Day < 5)) # titstr = 'days1to4 alltrials'
+MWM_DAY1to4_T56 <- group_MWM_by_day(subset(MWM,trial_num > 4 & trial_num < 7 & X_Day < 5)) # titstr = 'days1to4 alltrials'
+
+MWM_DAY4_Probe <- group_MWM_by_day(subset(MWM, Probe == TRUE & day_cat == 4 & trial_num == 7)) 
+MWM_DAY6_Probe <- group_MWM_by_day(subset(MWM, Probe == TRUE & day_cat == 6 & trial_num == 7)) 
+
+MWM_DAY56_allT <- group_MWM_by_day(subset(MWM,trial_num < 7 & X_Day > 4 & X_Day < 7 )) 
 
 
-MWM_DAY <- TMP %>% group_by(animalID, Age.months., day_cat, Strain) %>% 
-  summarize(mn_thig = mean(is_thigmotaxis), mn_circ = mean(is_circling) , mn_rnd = mean(is_random_path) , 
-            mn_scan = mean(is_scanning) , mn_chain = mean(is_chaining) , mn_direct = mean(is_directed_search) , 
-            mn_cor_path = mean(is_corrected_path ), mn_dir_path = mean(is_direct_path), mn_persev = mean(is_perseverance), 
-            mn_thig_c = mean(thig_conf), mn_circ_c = mean(circ_conf) , mn_rnd_c = mean(rand_conf) , 
-            mn_scan_c = mean(scan_conf) , mn_chain_c = mean(chain_conf) , mn_direct_c = mean(dir_search_conf) , 
-            mn_cor_path_c = mean(correc_conf ), mn_dir_path_c = mean(dir_path_conf), mn_persev_c = mean(persev_conf), 
-            mn_allocentric_conf  = mean(allocentric_conf ), mn_escape_conf  = mean(escape_conf ),
-            mn_CIPL = mean(CIPL_Scores), mn_allocentric = mean(is_allocentric), sum_allocentric = sum(is_allocentric), mn_escape = mean(is_escape),
-            mn_TIE =  mean(time.in.e.quadrant.norm), mn_TIW = mean(time.in.w.quadrant.norm),mn_TIN = mean(time.in.n.quadrant.norm),
-            mn_TIS = mean(time.in.s.quadrant.norm), mn_TSmN = mean(time.in.s.minus.n.norm), mn_latency = mean(latency.to.goal),
-            sm_goal_cross = sum(goal.crossings), mn_entropy = mean(entropy_strat) )
+# MWM_DAY <- TMP %>% group_by(animalID, Age.months., day_cat, Strain) %>% 
+#   summarize(mn_thig = mean(is_thigmotaxis), mn_circ = mean(is_circling) , mn_rnd = mean(is_random_path) , 
+#             mn_scan = mean(is_scanning) , mn_chain = mean(is_chaining) , mn_direct = mean(is_directed_search) , 
+#             mn_cor_path = mean(is_corrected_path ), mn_dir_path = mean(is_direct_path), mn_persev = mean(is_perseverance), 
+#             mn_thig_c = mean(thig_conf), mn_circ_c = mean(circ_conf) , mn_rnd_c = mean(rand_conf) , 
+#             mn_scan_c = mean(scan_conf) , mn_chain_c = mean(chain_conf) , mn_direct_c = mean(dir_search_conf) , 
+#             mn_cor_path_c = mean(correc_conf ), mn_dir_path_c = mean(dir_path_conf), mn_persev_c = mean(persev_conf), 
+#             mn_allocentric_conf  = mean(allocentric_conf ), mn_escape_conf  = mean(escape_conf ),
+#             mn_CIPL = mean(CIPL_Scores), mn_allocentric = mean(is_allocentric), sum_allocentric = sum(is_allocentric), mn_escape = mean(is_escape),
+#             mn_TIE =  mean(time.in.e.quadrant.norm), mn_TIW = mean(time.in.w.quadrant.norm),mn_TIN = mean(time.in.n.quadrant.norm),
+#             mn_TIS = mean(time.in.s.quadrant.norm), mn_TSmN = mean(time.in.s.minus.n.norm), mn_latency = mean(latency.to.goal),
+#             sm_goal_cross = sum(goal.crossings), mn_entropy = mean(entropy_strat) )
 
-MWM_DAY$animalID <- factor(MWM_DAY$animalID) # gets rid of empty factors
-MWM_DAY$day_cat <- factor(MWM_DAY$day_cat) # gets rid of empty factors
-MWM_DAY$Strain <- factor(MWM_DAY$Strain) # gets rid of empty factors
+# MWM_DAY$animalID <- factor(MWM_DAY$animalID) # gets rid of empty factors
+# MWM_DAY$day_cat <- factor(MWM_DAY$day_cat) # gets rid of empty factors
+# MWM_DAY$Strain <- factor(MWM_DAY$Strain) # gets rid of empty factors
 
-MWM_DAY_COMBINE_MICE <- TMP %>% group_by( Age.months., day_cat, Strain) %>% 
+MWM_DAY_COMBINE_MICE <- subset(MWM,trial_num < 7 & X_Day < 5) %>% group_by( Age.months., day_cat, Strain) %>% 
   summarize( sum_allocentric = sum(is_allocentric), sum_escape = sum(is_escape))
 
 
 MWM_DAY_COMBINE_MICE_PROBE4 <- subset(MWM, Probe == TRUE & day_cat == 4 & trial_num == 7) %>% group_by( Age.months., Strain) %>% 
-  summarize( sum_allocentric = sum(is_allocentric), sum_escape = sum(is_escape), sum_goal_crossings = sum(goal.crossings), mn_CIPL = mean(CIPL_Scores))
+  summarize( sum_allocentric = sum(is_allocentric), sum_escape = sum(is_escape), sum_goal_crossings = sum(goal.crossings), 
+             mn_CIPL = mean(CIPL_Scores))
 
 MWM_DAY_COMBINE_MICE_PROBE6 <- subset(MWM, Probe == TRUE & day_cat == 6 & trial_num == 7) %>% group_by( Age.months., Strain) %>% 
   summarize( sum_allocentric = sum(is_allocentric), sum_escape = sum(is_escape),sum_goal_crossings = sum(goal.crossings),mn_CIPL = mean(CIPL_Scores))
 
 
-MWM_DAY_tr12 <- subset(MWM, trial_num < 3)  %>% group_by(animalID, Age.months., day_cat, Strain) %>% 
-  summarize(mn_thig = mean(is_thigmotaxis), mn_circ = mean(is_circling) , mn_rnd = mean(is_random_path) , 
-            mn_scan = mean(is_scanning) , mn_chain = mean(is_chaining) , mn_direct = mean(is_directed_search) , 
-            mn_cor_path = mean(is_corrected_path ), mn_dir_path = mean(is_direct_path), mn_persev = mean(is_perseverance), 
-            mn_CIPL = mean(CIPL_Scores), mn_allocentric = mean(is_allocentric), sum_allocentric = sum(is_allocentric), mn_escape = mean(is_escape),
-            mn_TIE =  mean(time.in.e.quadrant.norm), mn_TIW = mean(time.in.w.quadrant.norm),mn_TIN = mean(time.in.n.quadrant.norm),
-            mn_TIS = mean(time.in.s.quadrant.norm), mn_TSmN = mean(time.in.s.minus.n.norm), mn_latency = mean(latency.to.goal),
-            sm_goal_cross = sum(goal.crossings))
-
-MWM_DAY_tr56 <- subset(MWM, trial_num > 4 & trial_num < 7 )  %>% group_by(animalID, Age.months., day_cat, Strain) %>% 
-  summarize(mn_thig = mean(is_thigmotaxis), mn_circ = mean(is_circling) , mn_rnd = mean(is_random_path) , 
-            mn_scan = mean(is_scanning) , mn_chain = mean(is_chaining) , mn_direct = mean(is_directed_search) , 
-            mn_cor_path = mean(is_corrected_path ), mn_dir_path = mean(is_direct_path), mn_persev = mean(is_perseverance), 
-            mn_CIPL = mean(CIPL_Scores), mn_allocentric = mean(is_allocentric), sum_allocentric = sum(is_allocentric), mn_escape = mean(is_escape),
-            mn_TIE =  mean(time.in.e.quadrant.norm), mn_TIW = mean(time.in.w.quadrant.norm),mn_TIN = mean(time.in.n.quadrant.norm),
-            mn_TIS = mean(time.in.s.quadrant.norm), mn_TSmN = mean(time.in.s.minus.n.norm), mn_latency = mean(latency.to.goal),
-            sm_goal_cross = sum(goal.crossings))
-
-MWM_DAY_tr56$LearnCIPL =  MWM_DAY_tr56$mn_CIPL - MWM_DAY_tr12$mn_CIPL
-MWM_DAY_tr56$LearnTimeInSouth =  MWM_DAY_tr56$mn_TIS - MWM_DAY_tr12$mn_TIS
-
 # General approach to stats:
 # If there is a main effect, then it is legit to do post hoc. If no main effect, no post hoc.
 
-# CIPL: 
-plot_MWM1(MWM_DAY,MWM_DAY$mn_CIPL,'CIPL', titstr )
-MWM_stats_1to4(MWM_DAY,'mn_CIPL')
-  
+# CIPL: For sure in paper 
+plot_MWM1(MWM_DAY1to4_allT,MWM_DAY1to4_allT$mn_CIPL,'CIPL', titstr )
+ggsave(paste0(save_dir,"CIPLd1to4.svg"), device = "svg", width = 4, height = 5, units = "in")
+MWM_stats_1to4(MWM_DAY1to4_allT,'mn_CIPL')
 
-plot_MWM1(MWM_DAY,MWM_DAY$mn_allocentric_conf,'mn_allocentric_conf', titstr )
-MWM_stats_1to4(MWM_DAY,'mn_allocentric_conf')
+# Mean allocentric: For sure in paper 
+plot_MWM1(MWM_DAY1to4_allT,MWM_DAY1to4_allT$mn_allocentric_conf,'mn_allocentric_conf', titstr )
+ggsave(paste0(save_dir,"AlloProb_d1to4.svg"), device = "svg", width = 4, height = 5, units = "in")
+MWM_stats_1to4(MWM_DAY1to4_allT,'mn_allocentric_conf')
+#plot_MWM1(MWM_DAY1to4_allT,MWM_DAY1to4_allT$mn_dir_path_c,'mn_dir_path_c', titstr )
+#plot_MWM1(MWM_DAY1to4_allT,MWM_DAY1to4_allT$mn_direct_c,'mn_direct_c', titstr )
+#plot_MWM1(MWM_DAY1to4_allT,MWM_DAY1to4_allT$mn_cor_path_c,'mn_cor_path_c', titstr )\
+# Mean escape: not really necessary.
+plot_MWM1(MWM_DAY1to4_allT,MWM_DAY1to4_allT$mn_escape_conf,'mn_escape_conf', titstr )
+MWM_stats_1to4(MWM_DAY1to4_allT,'mn_escape_conf')
 
-plot_MWM1(MWM_DAY,MWM_DAY$mn_escape_conf,'mn_escape_conf', titstr )
-MWM_stats_1to4(MWM_DAY,'mn_escape_conf')
 
-# mn_TSmN
-plot_MWM1(MWM_DAY,MWM_DAY$mn_TSmN,'mn_TSmN',titstr )
+# mn_TSmN: Strong effect here. Confirms above so not sure if it adds to the story.
+plot_MWM1(MWM_DAY1to4_allT,MWM_DAY1to4_allT$mn_TSmN,'mn_TSmN',titstr )
+ggsave(paste0(save_dir,"TimeSpentInTargetD1to4.svg"), device = "svg", width = 4, height = 5, units = "in")
 MWM_stats_1to4(MWM_DAY,'mn_TSmN')
 
+# MWM_DAY1to4_T56 and T12 - effect there but also when all trials so not much added with just focusing on the last trials or the first trials
+plot_MWM1(MWM_DAY1to4_T12,MWM_DAY1to4_T12$mn_CIPL,'CIPL', 'trials 1 and 2' )
+plot_MWM1(MWM_DAY1to4_T56,MWM_DAY1to4_T56$mn_CIPL,'CIPL', 'trials 5 and 6' )
 
 #plot_MWM1(MWM_DAY,MWM_DAY$mn_entropy,'mn_entropy', titstr )
 #plot_MWM1(MWM_DAY,MWM_DAY$mn_direct_c,'mn_direct_c', titstr )
@@ -270,37 +290,91 @@ MWM_stats_1to4(MWM_DAY,'mn_TSmN')
 #plot_MWM_violin(MWM_DAY,MWM_DAY$mn_CIPL,'mn_CIPL', titstr )
 #plot_MWM_box(MWM_DAY,MWM_DAY$mn_CIPL,'CIPL', titstr )
 # number of goal crosses. 
-plot_MWM1(MWM_DAY,MWM_DAY$sm_goal_cross,'goal crosses',titstr )
+plot_MWM1(MWM_DAY1to4_allT,MWM_DAY1to4_allT$sm_goal_cross,'goal crosses',titstr )
 
-# Show the learning within each day - difference between the last 2 and first 2 trials. Proportion of time in quadrant.
-plot_MWM1(MWM_DAY_tr56,MWM_DAY_tr56$LearnCIPL,'LearnCIPL',titstr )
+
+
+
+# FIGURE 1: One graph of ONLY age for the wild type INTACT
+MWM_INTACT <- subset(MWM_DAY1to4_allT, Strain == 'INTACT') 
+plot_MWM1(MWM_INTACT,MWM_INTACT$mn_CIPL,'mn_CIPL',paste(titstr, ' INTACT only') )
+ggsave(paste0(save_dir,"INTACT ONLYd1to4.svg"), device = "svg", width = 4, height = 5, units = "in")
+MWM_INTACT <- subset(MWM_DAY56_allT, Strain == 'INTACT') 
+plot_MWM1(MWM_INTACT,MWM_INTACT$mn_CIPL,'mn_CIPL','d56 INTACT only' )
+ggsave(paste0(save_dir,"INTACT ONLYd56.svg"), device = "svg", width = 4, height = 5, units = "in")
+
+
+
+MWM_INTACT <- subset(MWM_DAY1to6_allT, Strain == 'INTACT') 
+plot_MWM1(MWM_INTACT,MWM_INTACT$mn_CIPL,'mn_CIPL','INTACT only' )
+ggsave(paste0(save_dir,"INTACT ALL DAYS.svg"), device = "svg", width = 4, height = 5, units = "in")
+
+
+#plot_MWM_box(MWM_INTACT,MWM_INTACT$mn_CIPL,'mn_CIPL',titstr )
+
 
 # Show the learning within each day - difference between the last 2 and first 2 trials. CIP
-plot_MWM1(MWM_DAY_tr56,MWM_DAY_tr56$LearnTimeInSouth,'LearnTimeInSouth',titstr )
+#plot_MWM1(MWM_DAY_tr56,MWM_DAY_tr56$LearnTimeInSouth,'LearnTimeInSouth',titstr )
 
 # Correlation between CIPL and other scores.
 # What correlates the best with CIPL?
-ggplot(data = MWM_DAY, aes(x =mn_allocentric, y = mn_CIPL, color = Strain)) + geom_point()+ facet_wrap(~Age.months.) +  geom_smooth() + 
-  scale_color_manual(values = custom_colors) + ggtitle(paste (titstr,'Correlation between measures'))
-ggplot(data = MWM_DAY, aes(x =mn_allocentric_conf, y = mn_CIPL, color = Strain)) + geom_point()+ facet_wrap(~Age.months.) +  geom_smooth() + 
-  scale_color_manual(values = custom_colors) + ggtitle(paste (titstr,'Correlation between measures'))
-ggplot(data = MWM_DAY, aes(x =mn_escape, y = mn_CIPL, color = Strain)) + geom_point()+ facet_wrap(~Age.months.) +  geom_smooth() + 
-  scale_color_manual(values = custom_colors) + ggtitle(paste (titstr,'Correlation between measures'))
-ggplot(data = MWM_DAY, aes(x =mn_TIS, y = mn_CIPL, color = Strain)) + geom_point()+ facet_wrap(~Age.months.) +  geom_smooth() + 
-  scale_color_manual(values = custom_colors) + ggtitle(paste (titstr,'Correlation between measures'))
+# ggplot(data = MWM_DAY1to4_allT, aes(x =mn_allocentric, y = mn_CIPL, color = Strain)) + geom_point()+ facet_wrap(~Age.months.) +  geom_smooth() + 
+#   scale_color_manual(values = custom_colors) + theme(legend.position="none") + ggtitle(paste (titstr,'Correlation between measures'))
 
-#ggplot(data = TB, aes(x =escape, y = mn_CIPL, color = Strain)) + geom_point()+ facet_wrap(~Age.months.) +  geom_smooth()
+ggplot(data = MWM_DAY1to4_allT, aes(x =mn_allocentric_conf, y = mn_CIPL, color = Strain)) + geom_point()+ facet_wrap(~Age.months.) +  geom_smooth() + 
+  scale_color_manual(values = custom_colors) + theme(legend.position="none") + ggtitle(paste (titstr,'Correlation between measures'))
+ggsave(paste0(save_dir,"CIPLtoALLO_Corr.svg"), device = "svg", width = 5, height = 5, units = "in")
+# 
+# ggplot(data = MWM_DAY1to4_allT, aes(x =mn_escape, y = mn_CIPL, color = Strain)) + geom_point()+ facet_wrap(~Age.months.) +  geom_smooth() + 
+#   scale_color_manual(values = custom_colors) + theme(legend.position="none") + ggtitle(paste (titstr,'Correlation between measures'))
+# ggplot(data = MWM_DAY1to4_allT, aes(x =mn_TIS, y = mn_CIPL, color = Strain)) + geom_point()+ facet_wrap(~Age.months.) +  geom_smooth() + 
+#   scale_color_manual(values = custom_colors) + theme(legend.position="none") + ggtitle(paste (titstr,'Correlation between measures'))
+
+# PROBE TRIALS
+ggplot(MWM_DAY4_Probe, aes( x = Strain, y= mn_allocentric_conf, colour = Strain, shape =Strain)) + 
+  stat_summary(fun.data = mean_se, geom = "errorbar", width = .8, size = 1.4, position = position_dodge(width=0.9)) +
+  scale_color_manual(values = custom_colors) + 
+  scale_shape_manual(values = c(21,22)) + 
+  geom_point(position = position_jitterdodge(jitter.width = 0.3, dodge.width = 0.9), size = 1.4, alpha = 0.25, stroke = 1) + 
+  theme(legend.position="none") + # , strip.background = element_blank() to get rid of the box around the headers.
+  geom_signif(comparisons = list(c("INTACT", "OVX")), map_signif_level=TRUE, test = 't.test')+
+  facet_wrap(~Age.months.,nrow  = 1,ncol = 4) + 
+  ggtitle('Probe Day 4')
+
+for (age in sort(unique(MWM_DAY4_Probe$Age.months.))){
+  s = subset(MWM_DAY4_Probe,Age.months. == age )
+  print(paste('age',age))
+  print(t.test(mn_allocentric_conf ~ Strain, data = s)$p.value)
+}
+ggsave(paste0(save_dir,"Probe_Day4.svg"), device = "svg", width = 7, height = 5, units = "in")
+
+############## DAY 6
+
+ggplot(MWM_DAY6_Probe, aes( x = Strain, y= mn_allocentric_conf, colour = Strain, shape =Strain)) + 
+  stat_summary(fun.data = mean_se, geom = "errorbar", width = .8, size = 1.4, position = position_dodge(width=0.9)) +
+  scale_color_manual(values = custom_colors) + 
+  scale_shape_manual(values = c(21,22)) + 
+  geom_point(position = position_jitterdodge(jitter.width = 0.3, dodge.width = 0.9), size = 1.4, alpha = 0.25, stroke = 1) + 
+  theme(legend.position="none") + # , strip.background = element_blank() to get rid of the box around the headers.
+  geom_signif(comparisons = list(c("INTACT", "OVX")), map_signif_level=TRUE, test = 't.test')+
+  facet_wrap(~Age.months.,nrow  = 1,ncol = 4) + 
+  ggtitle('Probe Day 6')
+
+for (age in sort(unique(MWM_DAY6_Probe$Age.months.))){
+  s = subset(MWM_DAY6_Probe,Age.months. == age )
+  print(paste('age',age))
+  print(t.test(mn_allocentric_conf ~ Strain, data = s)$p.value)
+}
+ggsave(paste0(save_dir,"Probe_Day6.svg"), device = "svg", width = 3.5, height = 5, units = "in")
 
 
+# REVERSAL
 
+plot_MWM1(MWM_DAY56_allT,MWM_DAY56_allT$mn_CIPL,'mn_CIPL', 'Reversal' )
+ggsave(paste0(save_dir,"Reversal.svg"), device = "svg", width = 4, height = 5, units = "in")
 
-# Allocentric - only really shows up for all trials since in 2 trials, you can only get values of 0, .5, and 1 at the most
-plot_MWM_box(MWM_DAY,MWM_DAY$mn_allocentric,'mn_allocentric',titstr )
-
-
-# Proportion of time in the south quadrant
-
-plot_MWM1(MWM_DAY,MWM_DAY$mn_TIS,'mn_TIS',titstr )
+plot_MWM1(MWM_DAY56_allT,MWM_DAY56_allT$mn_allocentric_conf,'mn', 'Reversal' )
+plot_MWM1(MWM_DAY56_allT,MWM_DAY56_allT$mn_TIS,'mn_TIS', 'Reversal' )
 
 # sum of allocentric and escape using MWM_DAY_COMBINE_MICE
 ggplot(MWM_DAY_COMBINE_MICE, aes( x = day_cat, y= sum_allocentric, fill =  Strain, colour = Strain)) + 
@@ -323,12 +397,12 @@ ggplot(MWM_DAY_COMBINE_MICE_PROBE6, aes( x = Strain, y= sum_allocentric, fill = 
   geom_col(position = position_dodge(width = 0.9), color = 'black') + scale_fill_manual(values = custom_colors) + facet_wrap(~Age.months.)  +
   ggtitle(titstr)
 
+
+
+
+
 # sum allocentric but just for probe trials.
 
-# FIGURE 1: One graph of ONLY age for the wild type INTACT
-MWM_INTACT <- subset(MWM_DAY, Strain == 'INTACT') 
-plot_MWM1(MWM_INTACT,MWM_INTACT$mn_CIPL,'mn_CIPL',paste(titstr, ' INTACT only') )
-#plot_MWM_box(MWM_INTACT,MWM_INTACT$mn_CIPL,'mn_CIPL',titstr )
 
 
 # FIGURE 1: One graph of ONLY age for the wild type INTACT
