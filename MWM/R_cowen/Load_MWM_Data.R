@@ -37,6 +37,11 @@ MWM$time.in.n.quadrant.norm = 100*MWM$time.in.n.quadrant/S
 MWM$time.in.s.quadrant.norm = 100*MWM$time.in.s.quadrant/S
 
 MWM$time.in.s.minus.n.norm = MWM$time.in.s.quadrant.norm - MWM$time.in.n.quadrant.norm
+# Time in the goal zone - 2 steps since the goal switches after day 4.
+MWM$time.in.goal.zone.norm = MWM$time.in.s.quadrant.norm
+MWM$time.in.goal.zone.norm[MWM$X_Day>4] = MWM$time.in.n.quadrant.norm[MWM$X_Day>4]
+
+
 
 entropy <- function(p) {
   z <- -p * log2(p +  .Machine$double.eps)    # Compute terms

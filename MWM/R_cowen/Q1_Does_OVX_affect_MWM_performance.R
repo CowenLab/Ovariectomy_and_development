@@ -7,6 +7,7 @@
 # Konsolaki uses a Box-Cox transform (EM) to make data normal -seems overkill, but should look into. in MASS, called boxcox()
 #
 # Include the probability for each strategy. This is in the 'confidence' value.
+# TODO: Add time_in_goal to the original MWM table and plot for all days instead of 1-4 and 5-6 separately.
 #
 # There are a tone of NAs in latency to goal - why? > 60? I think latency is not somethign we can analyze - it's not calculated completely.
 ###########################################################
@@ -21,6 +22,8 @@ library(dplyr)
 library(tidyverse)
 library(ggthemes)
 library(ggsignif)
+library(effectsize)
+
 # library(rstatix)
 # library(stringr)
 # install.packages('datarium')
@@ -47,21 +50,19 @@ source(paste0(code_dir,'Load_MWM_Data.R'))
 # Define the plot functions.
 
 plot_MWM1 <- function(TBL,vbl,ylab_txt, titstr){
+  # Assumes that all 6 days are plotted.
   ggplot(TBL, aes( x = TBL$day_cat, y= vbl,  colour = TBL$Strain, shape =TBL$Strain)) + 
     stat_summary(fun.data = mean_se, geom = "errorbar", width = .8, size = 1.4, position = position_dodge(width=0.9)) +
     scale_color_manual(values = custom_colors) + 
     scale_shape_manual(values = c(21,22)) + 
     geom_point(position = position_jitterdodge(jitter.width = 0.3, dodge.width = 0.9), size = 1.4, alpha = 0.25, stroke = 1) + 
-    #geom_dotplot(position = position_dodge(width=0.9),
-    #             binaxis='y', 
-  #               stackdir='center', 
-  #               dotsize = 1.4) + 
-    facet_wrap(~TBL$Age.months.) + 
-    ylab(ylab_txt) +
+    facet_wrap(~TBL$Age.months., nrow = 1) + 
+    ylab(ylab_txt) + xlab('Day') +
     theme(legend.position="none") + # , strip.background = element_blank() to get rid of the box around the headers.
     #geom_signif(comparisons = list(c("INTACT", "OVX")), map_signif_level=TRUE, test = 't.test')+
     ggtitle(titstr)
 }
+
 MWM_stats_1to4 <- function(TBL,vbl){
   #vbl = 'mn_CIPL'
   months = sort(unique(TBL$Age.months.)) 
@@ -74,9 +75,10 @@ MWM_stats_1to4 <- function(TBL,vbl){
     mod <- aov(mod_str,data = df )
     print(mod_str)
     print(summary(mod))
-    
+    print(eta_squared( mod))
     mod_str2 = as.formula(paste(vbl,'~ Strain '))
     dfd = subset(TBL, Age.months. == iMonth & day_cat == 3)
+    print('')
     print(paste('ttest d3 pbonf =', t.test(mod_str2,dfd)$p.value*2))
     
     dfd = subset(TBL, Age.months. == iMonth & day_cat == 4)
@@ -207,8 +209,8 @@ group_MWM_by_day <- function(TBL){
               mn_allocentric_conf  = mean(allocentric_conf ), mn_escape_conf  = mean(escape_conf ),
               mn_CIPL = mean(CIPL_Scores), mn_allocentric = mean(is_allocentric), sum_allocentric = sum(is_allocentric), mn_escape = mean(is_escape),
               mn_TIE =  mean(time.in.e.quadrant.norm), mn_TIW = mean(time.in.w.quadrant.norm),mn_TIN = mean(time.in.n.quadrant.norm),
-              mn_TIS = mean(time.in.s.quadrant.norm), mn_TSmN = mean(time.in.s.minus.n.norm), mn_latency = mean(latency.to.goal),
-              sm_goal_cross = sum(goal.crossings), mn_entropy = mean(entropy_strat) )
+              mn_TIS = mean(time.in.s.quadrant.norm), mn_TIG = mean(time.in.goal.zone.norm),mn_TSmN = mean(time.in.s.minus.n.norm), mn_latency = mean(latency.to.goal),
+              sm_goal_cross = sum(goal.crossings), mn_goal_cross = mean(goal.crossings), mn_entropy = mean(entropy_strat) )
   MWM_DAY$animalID <- factor(MWM_DAY$animalID) # gets rid of empty factors
   MWM_DAY$day_cat <- factor(MWM_DAY$day_cat) # gets rid of empty factors
   MWM_DAY$Strain <- factor(MWM_DAY$Strain) # gets rid of empty factors
@@ -259,13 +261,18 @@ MWM_DAY_COMBINE_MICE_PROBE6 <- subset(MWM, Probe == TRUE & day_cat == 6 & trial_
 # If there is a main effect, then it is legit to do post hoc. If no main effect, no post hoc.
 
 # CIPL: For sure in paper 
-plot_MWM1(MWM_DAY1to4_allT,MWM_DAY1to4_allT$mn_CIPL,'CIPL', titstr )
-ggsave(paste0(save_dir,"CIPLd1to4.svg"), device = "svg", width = 4, height = 5, units = "in")
+plot_MWM1(MWM_DAY1to6_allT,MWM_DAY1to6_allT$mn_CIPL,'CIPL', 'Days 1-6' )
+ggsave(paste0(save_dir,"CIPLd1to6.svg"), device = "svg", width = 8, height = 4, units = "in")
+# Stats for days 1-4 only.
 MWM_stats_1to4(MWM_DAY1to4_allT,'mn_CIPL')
 
+plot_MWM1(MWM_DAY1to6_allT,MWM_DAY1to6_allT$mn_TIG,'Time in Goal %', 'Days 1-6' )
+ggsave(paste0(save_dir,"Time_in_goal_perc_d1to6.svg"), device = "svg", width = 8, height = 4, units = "in")
+MWM_stats_1to4(MWM_DAY1to4_allT,'mn_TIG')
+
 # Mean allocentric: For sure in paper 
-plot_MWM1(MWM_DAY1to4_allT,MWM_DAY1to4_allT$mn_allocentric_conf,'mn_allocentric_conf', titstr )
-ggsave(paste0(save_dir,"AlloProb_d1to4.svg"), device = "svg", width = 4, height = 5, units = "in")
+plot_MWM1(MWM_DAY1to6_allT,MWM_DAY1to6_allT$mn_allocentric_conf,'mn_allocentric_conf', titstr )
+ggsave(paste0(save_dir,"AlloProb_d1to6.svg"), device = "svg", width = 8, height = 4, units = "in")
 MWM_stats_1to4(MWM_DAY1to4_allT,'mn_allocentric_conf')
 #plot_MWM1(MWM_DAY1to4_allT,MWM_DAY1to4_allT$mn_dir_path_c,'mn_dir_path_c', titstr )
 #plot_MWM1(MWM_DAY1to4_allT,MWM_DAY1to4_allT$mn_direct_c,'mn_direct_c', titstr )
@@ -274,24 +281,59 @@ MWM_stats_1to4(MWM_DAY1to4_allT,'mn_allocentric_conf')
 plot_MWM1(MWM_DAY1to4_allT,MWM_DAY1to4_allT$mn_escape_conf,'mn_escape_conf', titstr )
 MWM_stats_1to4(MWM_DAY1to4_allT,'mn_escape_conf')
 
+# mn_entropy ~ Strain * day_cat + Error(animalID/(Strain * day_cat))
+plot_MWM1(MWM_DAY1to6_allT,MWM_DAY1to6_allT$mn_entropy,'Entropy', titstr )
+MWM_stats_1to4(MWM_DAY1to6_allT,'mn_entropy')
+
+ggsave(paste0(save_dir,"Entropy.svg"), device = "svg", width = 8, height = 4, units = "in")
+
+
 
 # mn_TSmN: Strong effect here. Confirms above so not sure if it adds to the story.
-plot_MWM1(MWM_DAY1to4_allT,MWM_DAY1to4_allT$mn_TSmN,'mn_TSmN',titstr )
-ggsave(paste0(save_dir,"TimeSpentInTargetD1to4.svg"), device = "svg", width = 4, height = 5, units = "in")
-MWM_stats_1to4(MWM_DAY,'mn_TSmN')
+# plot_MWM1(MWM_DAY1to4_allT,MWM_DAY1to4_allT$mn_TSmN,'mn_TSmN',titstr )
+# 
+# ggsave(paste0(save_dir,"TimeSpentInTargetD1to4.svg"), device = "svg", width = 4, height = 5, units = "in")
+# MWM_stats_1to4(MWM_DAY,'mn_TSmN')
+
+# Time spent just in the goal quadrant.
+#plot_MWM1(MWM_DAY1to6_allT,MWM_DAY1to6_allT$mn_TIS,'mn_TIS', titstr )
+
+#plot_MWM1(MWM_DAY56_allT,MWM_DAY56_allT$mn_TIN,'mn_TIN', 'Reversal' )
+
 
 # MWM_DAY1to4_T56 and T12 - effect there but also when all trials so not much added with just focusing on the last trials or the first trials
 plot_MWM1(MWM_DAY1to4_T12,MWM_DAY1to4_T12$mn_CIPL,'CIPL', 'trials 1 and 2' )
 plot_MWM1(MWM_DAY1to4_T56,MWM_DAY1to4_T56$mn_CIPL,'CIPL', 'trials 5 and 6' )
 
-#plot_MWM1(MWM_DAY,MWM_DAY$mn_entropy,'mn_entropy', titstr )
+
 #plot_MWM1(MWM_DAY,MWM_DAY$mn_direct_c,'mn_direct_c', titstr )
 #plot_MWM1(MWM_DAY,MWM_DAY$mn_dir_path_c,'mn_dir_path_c', titstr )
 #plot_MWM_violin(MWM_DAY,MWM_DAY$mn_CIPL,'mn_CIPL', titstr )
 #plot_MWM_box(MWM_DAY,MWM_DAY$mn_CIPL,'CIPL', titstr )
 # number of goal crosses. 
-plot_MWM1(MWM_DAY1to4_allT,MWM_DAY1to4_allT$sm_goal_cross,'goal crosses',titstr )
 
+plot_MWM1(MWM_DAY4_Probe,MWM_DAY4_Probe$sm_goal_cross,'goal crosses','Goal cross day 4 probe' )
+ggsave(paste0(save_dir,"GOAL CROSSINGS DAY 4 PROBE.svg"), device = "svg", width = 6, height = 3, units = "in")
+
+print(paste('ttest pbonf =', t.test(sm_goal_cross~Strain,data = subset(MWM_DAY4_Probe, Age.months. == 2))$p.value))
+print(paste('ttest pbonf =', t.test(sm_goal_cross~Strain,data = subset(MWM_DAY4_Probe, Age.months. == 6))$p.value))
+print(paste('ttest pbonf =', t.test(sm_goal_cross~Strain,data = subset(MWM_DAY4_Probe, Age.months. == 9))$p.value))
+print(paste('ttest pbonf =', t.test(sm_goal_cross~Strain,data = subset(MWM_DAY4_Probe, Age.months. == 14))$p.value))
+
+
+dfd = subset(TBL, Age.months. == iMonth & day_cat == 4)
+print(paste('ttest d4 pbonf =', t.test(mod_str2,dfd)$p.value*2))
+
+plot_MWM1(MWM_DAY6_Probe,MWM_DAY6_Probe$sm_goal_cross,'goal crosses','Goal cross day 6 probe' )
+ggsave(paste0(save_dir,"GOAL CROSSINGS DAY 6 PROBE.svg"), device = "svg", width = 3, height = 3, units = "in")
+
+#plot_MWM1(MWM_DAY6_Probe,MWM_DAY6_Probe$mn_TIN,'TIME IN target','TIN day 6 probe' )
+#ggsave(paste0(save_dir,"Time in goal DAY 6 PROBE.svg"), device = "svg", width = 3, height = 3, units = "in")
+#plot_MWM1(MWM_DAY4_Probe,MWM_DAY4_Probe$mn_TIN,'TIME IN target quadrant','TIN day 4 probe' )
+#ggsave(paste0(save_dir,"Time in goal DAY 6 PROBE.svg"), device = "svg", width = 6, height = 3, units = "in")
+#plot_MWM1(MWM_DAY1to4_allT,MWM_DAY1to4_allT$sm_goal_cross,'goal crosses',titstr )
+#plot_MWM1(MWM_DAY1to4_allT,MWM_DAY1to4_allT$mn_goal_cross,'goal crosses',titstr )
+#plot_MWM1(MWM_DAY1to4_allT,MWM_DAY1to4_allT$mn_goal_cross,'goal crosses',titstr )
 
 
 
