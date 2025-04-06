@@ -220,7 +220,7 @@ group_MWM_by_day <- function(TBL){
               mn_thig_c = mean(thig_conf), mn_circ_c = mean(circ_conf) , mn_rnd_c = mean(rand_conf) , 
               mn_scan_c = mean(scan_conf) , mn_chain_c = mean(chain_conf) , mn_direct_c = mean(dir_search_conf) , 
               mn_cor_path_c = mean(correc_conf ), mn_dir_path_c = mean(dir_path_conf), mn_persev_c = mean(persev_conf), 
-              mn_allocentric_conf  = mean(allocentric_conf ), mn_escape_conf  = mean(escape_conf ),
+              mn_procedural_conf  = mean(procedural_conf ), mn_allocentric_conf  = mean(allocentric_conf ), mn_escape_conf  = mean(escape_conf ),
               mn_CIPL = mean(CIPL_Scores), mn_allocentric = mean(is_allocentric), sum_allocentric = sum(is_allocentric), mn_escape = mean(is_escape),
               mn_TIE =  mean(time.in.e.quadrant.norm), mn_TIW = mean(time.in.w.quadrant.norm),mn_TIN = mean(time.in.n.quadrant.norm),
               mn_TIS = mean(time.in.s.quadrant.norm), mn_TIG = mean(time.in.goal.zone.norm),mn_TSmN = mean(time.in.s.minus.n.norm), mn_latency = mean(latency.to.goal),
@@ -235,6 +235,23 @@ MWM_DAY1to6_allT <- group_MWM_by_day(subset(MWM,trial_num < 7 & X_Day < 7)) # ti
 MWM_DAY1to4_allT <- group_MWM_by_day(subset(MWM,trial_num < 7 & X_Day < 5)) # titstr = 'days1to4 alltrials'
 MWM_DAY1to4_T12 <- group_MWM_by_day(subset(MWM,trial_num < 3 & X_Day < 5)) # titstr = 'days1to4 alltrials'
 MWM_DAY1to4_T56 <- group_MWM_by_day(subset(MWM,trial_num > 4 & trial_num < 7 & X_Day < 5)) # titstr = 'days1to4 alltrials'
+
+
+MWM_DAY4_allT_long <- subset(MWM_DAY1to4_allT,day_cat == 4) %>% pivot_longer( cols = "mn_thig_c":"mn_persev_c", 
+                                                            names_to = "strategy_c",
+                                                            values_to = "conf")
+MWM_DAY4_allT_long$strategy_c = factor(MWM_DAY4_allT_long$strategy_c)
+
+MWM_DAY4_allT_long$strategy_c <- factor(MWM_DAY4_allT_long$strategy_c, levels=c('mn_thig_c', 'mn_circ_c', 'mn_rnd_c', 'mn_scan_c', 'mn_chain_c', 'mn_direct_c', 'mn_cor_path_c', 'mn_dir_path_c', 'mn_persev_c'))
+
+MWM_DAY4_allT_long2 <- subset(MWM_DAY1to4_allT,day_cat == 4) %>% pivot_longer( cols = c("mn_allocentric_conf", "mn_procedural_conf","mn_escape_conf"), 
+                                                                              names_to = "strategy_c",
+                                                                              values_to = "conf")
+MWM_DAY4_allT_long2$strategy_c = factor(MWM_DAY4_allT_long2$strategy_c)
+
+MWM_DAY4_allT_long2$strategy_c <- factor(MWM_DAY4_allT_long2$strategy_c, levels=c('mn_escape_conf', 'mn_procedural_conf', 'mn_allocentric_conf'))
+
+
 
 MWM_DAY4_Probe <- group_MWM_by_day(subset(MWM, Probe == TRUE & day_cat == 4 & trial_num == 7)) 
 MWM_DAY6_Probe <- group_MWM_by_day(subset(MWM, Probe == TRUE & day_cat == 6 & trial_num == 7)) 
@@ -370,6 +387,62 @@ MWM_INTACT <- subset(MWM_DAY1to6_allT, Strain == 'INTACT')
 plot_MWM1(MWM_INTACT,MWM_INTACT$mn_CIPL,'mn_CIPL','INTACT only' )
 ggsave(paste0(save_dir,"INTACT ALL DAYS.svg"), device = "svg", width = 4, height = 5, units = "in")
 
+
+# Eacn individual strategy on day 4 to look for individual differences.
+TBL = subset(MWM_DAY4_allT_long,Age.months. ==9)
+ggplot(TBL, aes( x = conf, y= strategy_c, colour = Strain, shape =Strain)) + 
+  stat_summary(fun.data = mean_se, geom = "errorbar", width = .8, size = 1.4, position = position_dodge(width=0.9)) +
+  scale_color_manual(values = custom_colors) + 
+  scale_shape_manual(values = c(21,22)) + 
+  geom_point(position = position_jitterdodge(jitter.width = 0.3, dodge.width = 0.9), size = 1.4, alpha = 0.25, stroke = 1) + 
+  theme(legend.position="none") + # , strip.background = element_blank() to get rid of the box around the headers.
+  ggtitle('Day 4, 9mo, individual strategies')
+
+
+ggsave(paste0(save_dir,"Day4_9mo_all_strategies.svg"), device = "svg", width = 5, height = 6, units = "in")
+pt = data.frame()
+for(strat in levels(TBL$strategy_c)){
+  print(paste('t-test DAY 4, 9mo ' , strat))
+  df = subset(TBL, strategy_c == strat)
+  x = df[df$Strain == 'INTACT','conf']
+  y = df[df$Strain == 'OVX','conf']
+  m = t.test(x,y);
+  v = nrow(pt) + 1
+  pt[v,'strat'] = strat
+  pt[v,'p'] = m$p.value
+  pt[v,'t'] = m$statistic
+  pt[v,'df'] = m$parameter
+}
+print(pt)
+p.adjust(pt$p,'holm')
+# meta strategy
+TBL = subset(MWM_DAY4_allT_long2,Age.months. ==9)
+
+ggplot(TBL, aes( x = conf, y= strategy_c, colour = Strain, shape =Strain)) + 
+  stat_summary(fun.data = mean_se, geom = "errorbar", width = .8, size = 1.4, position = position_dodge(width=0.9)) +
+  scale_color_manual(values = custom_colors) + 
+  scale_shape_manual(values = c(21,22)) + 
+  geom_point(position = position_jitterdodge(jitter.width = 0.3, dodge.width = 0.9), size = 1.4, alpha = 0.25, stroke = 1) + 
+  theme(legend.position="none") + # , strip.background = element_blank() to get rid of the box around the headers.
+  ggtitle('Day 4, 9mo, Meta strategies')
+
+ggsave(paste0(save_dir,"Day4_9mo_meta_strategies.svg"), device = "svg", width = 4, height = 5, units = "in")
+
+pt = data.frame()
+for(strat in levels(TBL$strategy_c)){
+  print(paste('t-test DAY 4, 9mo ' , strat))
+  df = subset(TBL, strategy_c == strat)
+  x = df[df$Strain == 'INTACT','conf']
+  y = df[df$Strain == 'OVX','conf']
+  m = t.test(x,y);
+  v = nrow(pt) + 1
+  pt[v,'strat'] = strat
+  pt[v,'p'] = m$p.value
+  pt[v,'t'] = m$statistic
+  pt[v,'df'] = m$parameter
+}
+print(pt)
+p.adjust(pt$p,'holm')
 
 #plot_MWM_box(MWM_INTACT,MWM_INTACT$mn_CIPL,'mn_CIPL',titstr )
 

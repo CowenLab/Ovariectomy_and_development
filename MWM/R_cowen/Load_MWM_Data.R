@@ -8,7 +8,7 @@ MWM$X_TargetID <- str_trim(MWM$X_TargetID)
 # This is done because trials were labeled by Gabriel sequentially regardless of day so that trial 20 on day 1 
 # would result in day 2 starting with trial 21.
 MWM$trial_num = MWM$X_Trial
-MWM$trial_num[MWM$trial_num > 6 & MWM$trial_num <= 12 ] = MWM$trial_num[MWM$trial_num > 6 & MWM$trial_num <= 12 ]-6
+MWM$trial_num[MWM$trial_num > 6  & MWM$trial_num <= 12 ] = MWM$trial_num[MWM$trial_num > 6 & MWM$trial_num <= 12 ]-6
 MWM$trial_num[MWM$trial_num > 12 & MWM$trial_num <= 18 ] = MWM$trial_num[MWM$trial_num > 12 & MWM$trial_num <= 18 ]-12
 MWM$trial_num[MWM$trial_num > 18 & MWM$trial_num <= 25 ] = MWM$trial_num[MWM$trial_num > 18 & MWM$trial_num <= 25 ]-18
 MWM$trial_num[MWM$trial_num > 25 & MWM$trial_num <= 31 ] = MWM$trial_num[MWM$trial_num > 25 & MWM$trial_num <= 31 ]-25
@@ -66,7 +66,8 @@ colnames(MWM)[colnames(MWM) == 'X8'] <- 'dir_path_conf'
 colnames(MWM)[colnames(MWM) == 'X9'] <- 'persev_conf'
 
 MWM$allocentric_conf = MWM$dir_path_conf + MWM$dir_search_conf + MWM$correc_conf # X7 = corrected path
-MWM$escape_conf = MWM$thig_conf + MWM$circ_conf + MWM$rand_conf # X7 = corrected path
+MWM$escape_conf = MWM$thig_conf + MWM$circ_conf + MWM$rand_conf # also called non-goal
+MWM$procedural_conf = MWM$scan_conf + MWM$chain_conf # 
 
 table(MWM$strategy_cat)
 
@@ -86,3 +87,4 @@ MWM$is_allocentric  = MWM$is_direct_path + MWM$is_directed_search + MWM$is_corre
 
 MWM$is_escape       = MWM$is_thigmotaxis + MWM$is_circling + MWM$is_random_path
 
+MWM$is_procedural   = MWM$is_scanning + MWM$is_chaining
