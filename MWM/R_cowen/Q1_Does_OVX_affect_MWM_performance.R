@@ -37,11 +37,10 @@ custom_colors <- c(INTACT = "#000000",OVX = "#9f044d")
 custom_colors2 <- c("#000000","#9f044d") 
 marker_color <- "#b5b2b3"
 #marker_color <- "white"
-
-
-
-data_dir = 'C:/Users/cowen/Documents/GitHub/Ovariectomy_and_development/MWM/'
-code_dir ='C:/Users/cowen/Documents/GitHub/Ovariectomy_and_development/MWM/R_cowen/'
+user= Sys.getenv("USERNAME")
+data_dir = paste0('C:/Users/',user,'/Documents/GitHub/Ovariectomy_and_development/MWM/')
+code_dir = paste0('C:/Users/',user,'/Documents/GitHub/Ovariectomy_and_development/MWM/R_cowen/')
+setwd(code_dir)
 save_dir = 'C:/Temp/'
 
 # Load the data...
@@ -83,6 +82,21 @@ MWM_stats_1to4 <- function(TBL,vbl){
     
     dfd = subset(TBL, Age.months. == iMonth & day_cat == 4)
     print(paste('ttest d4 pbonf =', t.test(mod_str2,dfd)$p.value*2))
+    
+  }
+}
+
+MWM_stats_5 <- function(TBL,vbl){
+  #vbl = 'mn_CIPL'
+  months = sort(unique(TBL$Age.months.)) 
+  for(iMonth in months){
+    print('----------')
+    print(paste('t-test DAY 5 ONLY MONTH: ' , iMonth))
+    print('----------')
+    df = subset(TBL, Age.months. == iMonth)    
+    mod_str = as.formula(paste(vbl,'~ Strain'))
+
+    print(t.test(mod_str,data= df))
     
   }
 }
@@ -226,6 +240,7 @@ MWM_DAY4_Probe <- group_MWM_by_day(subset(MWM, Probe == TRUE & day_cat == 4 & tr
 MWM_DAY6_Probe <- group_MWM_by_day(subset(MWM, Probe == TRUE & day_cat == 6 & trial_num == 7)) 
 
 MWM_DAY56_allT <- group_MWM_by_day(subset(MWM,trial_num < 7 & X_Day > 4 & X_Day < 7 )) 
+MWM_DAY5_allT <- group_MWM_by_day(subset(MWM,trial_num < 7 & day_cat == 5 )) 
 
 
 # MWM_DAY <- TMP %>% group_by(animalID, Age.months., day_cat, Strain) %>% 
@@ -274,6 +289,9 @@ MWM_stats_1to4(MWM_DAY1to4_allT,'mn_TIG')
 plot_MWM1(MWM_DAY1to6_allT,MWM_DAY1to6_allT$mn_allocentric_conf,'mn_allocentric_conf', titstr )
 ggsave(paste0(save_dir,"AlloProb_d1to6.svg"), device = "svg", width = 8, height = 4, units = "in")
 MWM_stats_1to4(MWM_DAY1to4_allT,'mn_allocentric_conf')
+# Look at the reversal day - 5.
+MWM_stats_5(MWM_DAY5_allT,'mn_allocentric_conf')
+
 #plot_MWM1(MWM_DAY1to4_allT,MWM_DAY1to4_allT$mn_dir_path_c,'mn_dir_path_c', titstr )
 #plot_MWM1(MWM_DAY1to4_allT,MWM_DAY1to4_allT$mn_direct_c,'mn_direct_c', titstr )
 #plot_MWM1(MWM_DAY1to4_allT,MWM_DAY1to4_allT$mn_cor_path_c,'mn_cor_path_c', titstr )\
@@ -283,7 +301,7 @@ MWM_stats_1to4(MWM_DAY1to4_allT,'mn_escape_conf')
 
 # mn_entropy ~ Strain * day_cat + Error(animalID/(Strain * day_cat))
 plot_MWM1(MWM_DAY1to6_allT,MWM_DAY1to6_allT$mn_entropy,'Entropy', titstr )
-MWM_stats_1to4(MWM_DAY1to6_allT,'mn_entropy')
+MWM_stats_1to4(MWM_DAY1to4_allT,'mn_entropy')
 
 ggsave(paste0(save_dir,"Entropy.svg"), device = "svg", width = 8, height = 4, units = "in")
 
