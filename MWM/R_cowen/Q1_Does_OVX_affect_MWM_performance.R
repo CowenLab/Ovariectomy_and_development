@@ -320,6 +320,7 @@ print(paste('ttest pbonf =', t.test(sm_goal_cross~Strain,data = subset(MWM_DAY4_
 print(paste('ttest pbonf =', t.test(sm_goal_cross~Strain,data = subset(MWM_DAY4_Probe, Age.months. == 9))$p.value))
 print(paste('ttest pbonf =', t.test(sm_goal_cross~Strain,data = subset(MWM_DAY4_Probe, Age.months. == 14))$p.value))
 
+t.test(sm_goal_cross~Strain,data = subset(MWM_DAY4_Probe, Age.months. == 9))
 
 dfd = subset(TBL, Age.months. == iMonth & day_cat == 4)
 print(paste('ttest d4 pbonf =', t.test(mod_str2,dfd)$p.value*2))
